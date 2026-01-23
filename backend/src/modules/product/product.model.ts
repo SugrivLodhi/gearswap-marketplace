@@ -1,0 +1,103 @@
+import mongoose, { Document, Schema } from 'mongoose';
+
+export interface IVariant {
+    sku: string;
+    price: number;
+    stock: number;
+    attributes: Record<string, string>; // e.g., { size: "M", color: "Blue" }
+}
+
+export interface IProduct extends Document {
+    name: string;
+    description: string;
+    category: string;
+    imageUrl: string;
+    sellerId: mongoose.Types.ObjectId;
+    variants: IVariant[];
+    isDeleted: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+const variantSchema = new Schema<IVariant>(
+    {
+        sku: {
+            type: String,
+            required: true,
+        },
+        price: {
+            type: Number,
+            required: true,
+            min: 0,
+        },
+        stock: {
+            type: Number,
+            required: true,
+            min: 0,
+            default: 0,
+        },
+        attributes: {
+            type: Map,
+            of: String,
+            default: {},
+        },
+    },
+    { _id: true }
+);
+
+const productSchema = new Schema<IProduct>(
+    {
+        name: {
+            type: String,
+            required: true,
+            trim: true,
+            index: 'text',
+        },
+        description: {
+            type: String,
+            required: true,
+            index: 'text',
+        },
+        category: {
+            type: String,
+            required: true,
+            index: true,
+        },
+        imageUrl: {
+            type: String,
+            required: true,
+        },
+        sellerId: {
+            type: Schema.Types.ObjectId,
+            ref: 'User',
+            required: true,
+            index: true,
+        },
+        variants: {
+            type: [variantSchema],
+            required: true,
+            validate: {
+                validator: (v: IVariant[]) => v.length > 0,
+                message: 'Product must have at least one variant',
+            },
+        },
+        isDeleted: {
+            type: Boolean,
+            default: false,
+            index: true,
+        },
+    },
+    {
+        timestamps: true,
+    }
+);
+
+// Compound indexes for efficient queries
+productSchema.index({ sellerId: 1, isDeleted: 1 });
+productSchema.index({ category: 1, isDeleted: 1 });
+productSchema.index({ name: 'text', description: 'text' });
+
+// Ensure SKU uniqueness within a product
+variantSchema.index({ sku: 1 }, { unique: true, sparse: true });
+
+export const Product = mongoose.model<IProduct>('Product', productSchema);
