@@ -6,6 +6,7 @@ import { Navbar } from '@/components/Navbar';
 import { Button } from '@/components/ui/Button';
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import Image from 'next/image';
 import { useAuth } from '@/lib/auth-context';
 import { formatPrice } from '@/lib/utils'; // Ensure specific import
