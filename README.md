@@ -416,6 +416,7 @@ See [CODE_REVIEW.md](./CODE_REVIEW.md) for detailed limitations and production i
 
 ```bash
 cd backend
+npm run seed # Add some dummy data in db and see intail ui
 npm run dev      # Start dev server with hot reload
 npm test         # Run tests
 npm run build    # Build for production
