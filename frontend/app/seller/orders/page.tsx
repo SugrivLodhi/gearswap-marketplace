@@ -6,6 +6,8 @@ import { Navbar } from '@/components/Navbar';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { useState } from 'react';
+import { formatPrice } from '@/lib/utils';
+import Link from 'next/link';
 
 export default function SellerOrdersPage() {
   const { data, loading, refetch } = useQuery(GET_SELLER_ORDERS);
@@ -109,8 +111,8 @@ export default function SellerOrdersPage() {
                           <td className="py-2 text-sm text-gray-900">{item.productName}</td>
                           <td className="py-2 text-sm text-gray-500">{item.variantSku}</td>
                           <td className="py-2 text-sm text-gray-900 text-right">{item.quantity}</td>
-                          <td className="py-2 text-sm text-gray-900 text-right">${item.price.toFixed(2)}</td>
-                          <td className="py-2 text-sm text-gray-900 text-right font-medium">${item.subtotal.toFixed(2)}</td>
+                          <td className="py-2 text-sm text-gray-900 text-right">{formatPrice(item.price)}</td>
+                          <td className="py-2 text-sm text-gray-900 text-right font-medium">{formatPrice(item.subtotal)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -119,7 +121,7 @@ export default function SellerOrdersPage() {
                         <td colSpan={4} className="pt-3 text-right text-sm font-medium text-gray-900">Total Revenue:</td>
                         <td className="pt-3 text-right text-lg font-bold text-primary-600">
                           {/* Calculate total just for this seller's items in the order */}
-                          ${order.items.reduce((sum: number, item: any) => sum + item.subtotal, 0).toFixed(2)}
+                          {formatPrice(order.items.reduce((sum: number, item: any) => sum + item.subtotal, 0))}
                         </td>
                       </tr>
                     </tfoot>

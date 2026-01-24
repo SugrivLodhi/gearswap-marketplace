@@ -6,17 +6,13 @@ import { connectDatabase } from '../config/database';
 import bcrypt from 'bcryptjs';
 
 /**
- * GearSwap - Musical Instrument Marketplace Seeder
- * 
- * This script populates the database with realistic musical instrument data:
- * - Users (buyers and sellers)
- * - Musical instruments (guitars, keyboards, drums, etc.)
- * - Discount codes
+ * GearSwap - Musical Instrument Marketplace Seeder (India Edition)
+ * Comprehensive Catalog
  */
 
 async function seed() {
     try {
-        console.log('🎵 Starting GearSwap Musical Instrument Marketplace Seeder...\n');
+        console.log('🎵 Starting GearSwap Musical Instrument Marketplace Seeder (India)...\n');
 
         // Connect to database
         await connectDatabase();
@@ -34,19 +30,13 @@ async function seed() {
 
         // Buyers
         const buyer1 = await User.create({
-            email: 'john.musician@example.com',
+            email: 'rahul.musician@example.com',
             password: hashedPassword,
             role: UserRole.BUYER,
         });
 
         const buyer2 = await User.create({
-            email: 'sarah.guitarist@example.com',
-            password: hashedPassword,
-            role: UserRole.BUYER,
-        });
-
-        const buyer3 = await User.create({
-            email: 'mike.drummer@example.com',
+            email: 'priya.guitarist@example.com',
             password: hashedPassword,
             role: UserRole.BUYER,
         });
@@ -71,569 +61,328 @@ async function seed() {
         });
 
         const seller4 = await User.create({
-            email: 'brass.and.strings@gearswap.com',
+            email: 'pro.audio@gearswap.com',
             password: hashedPassword,
             role: UserRole.SELLER,
         });
 
-        console.log(`✅ Created ${3} buyers and ${4} sellers\n`);
+        console.log(`✅ Created buyers and sellers\n`);
 
-        // Create Products - GUITARS
-        console.log('🎸 Creating guitar products...');
+        console.log('🎸 Creating products with INR pricing...');
 
+        // 1. Electric Guitars
         await Product.create({
-            name: 'Fender Stratocaster American Professional II',
-            description: 'The iconic Stratocaster with modern refinements. Features V-Mod II pickups, Deep C neck profile, and premium hardware. Perfect for rock, blues, and everything in between.',
+            name: 'Fender Stratocaster American Pro II',
+            description: 'The iconic Stratocaster with modern refinements. Imported directly for Indian musicians.',
             category: 'Electric Guitars',
             imageUrl: 'https://images.unsplash.com/photo-1564186763535-ebb21ef5277f?w=800',
             sellerId: seller1._id,
             variants: [
                 {
-                    sku: 'STRAT-SSB-001',
-                    price: 1799.99,
+                    sku: 'STRAT-001',
+                    price: 175000,
                     stock: 5,
                     attributes: { color: 'Sunburst', finish: 'Gloss' },
                 },
-                {
-                    sku: 'STRAT-BLK-001',
-                    price: 1799.99,
-                    stock: 8,
-                    attributes: { color: 'Black', finish: 'Gloss' },
-                },
-                {
-                    sku: 'STRAT-OWT-001',
-                    price: 1849.99,
-                    stock: 3,
-                    attributes: { color: 'Olympic White', finish: 'Gloss' },
-                },
             ],
         });
 
         await Product.create({
-            name: 'Gibson Les Paul Standard 50s',
-            description: 'Classic Les Paul with vintage 50s specs. Burstbucker pickups, rounded 50s neck profile, and stunning AAA flame maple top. The ultimate rock machine.',
+            name: 'Ibanez Gio GRX70QA',
+            description: 'Top beginner electric guitar in India. Great for learning rock and metal.',
             category: 'Electric Guitars',
-            imageUrl: 'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=800',
+            imageUrl: 'https://images.unsplash.com/photo-1550985543-f4423c8d361e?w=800',
             sellerId: seller1._id,
             variants: [
                 {
-                    sku: 'LP-GB-001',
-                    price: 2499.99,
-                    stock: 4,
-                    attributes: { color: 'Gold Top', finish: 'Gloss' },
-                },
-                {
-                    sku: 'LP-HB-001',
-                    price: 2599.99,
-                    stock: 6,
-                    attributes: { color: 'Heritage Cherry Sunburst', finish: 'Gloss' },
-                },
-                {
-                    sku: 'LP-TB-001',
-                    price: 2599.99,
-                    stock: 2,
-                    attributes: { color: 'Tobacco Burst', finish: 'Gloss' },
+                    sku: 'GRX70-TRB',
+                    price: 18500,
+                    stock: 50,
+                    attributes: { color: 'Transparent Red Burst' },
                 },
             ],
         });
 
+        // 2. Acoustic Guitars
         await Product.create({
-            name: 'Taylor 214ce Acoustic-Electric Guitar',
-            description: 'Grand Auditorium body with solid Sitka spruce top and layered rosewood back and sides. Built-in ES2 electronics for stage-ready performance.',
+            name: 'Yamaha F310 Acoustic Guitar',
+            description: 'The most popular acoustic folk guitar in India. Excellent quality at an affordable price.',
             category: 'Acoustic Guitars',
             imageUrl: 'https://images.unsplash.com/photo-1525201548942-d8732f6617a0?w=800',
             sellerId: seller1._id,
             variants: [
                 {
-                    sku: 'TAYLOR-214-NAT',
-                    price: 1099.99,
-                    stock: 10,
-                    attributes: { finish: 'Natural', electronics: 'ES2' },
-                },
-                {
-                    sku: 'TAYLOR-214-SB',
-                    price: 1099.99,
-                    stock: 7,
-                    attributes: { finish: 'Sunburst', electronics: 'ES2' },
+                    sku: 'F310-NAT',
+                    price: 10500,
+                    stock: 100,
+                    attributes: { finish: 'Natural', body: 'Folk' },
                 },
             ],
         });
 
         await Product.create({
-            name: 'Ibanez RG550 Genesis',
-            description: 'Legendary shred machine with Edge tremolo, DiMarzio pickups, and wizard neck. Built for speed and precision.',
-            category: 'Electric Guitars',
-            imageUrl: 'https://images.unsplash.com/photo-1516924962500-2b4b3b99ea02?w=800',
+            name: 'Taylor 214ce-K DLX',
+            description: 'Premium Grand Auditorium guitar with layered Koa back and sides. Stage-ready electronics.',
+            category: 'Acoustic Guitars',
+            imageUrl: 'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=800',
             sellerId: seller1._id,
             variants: [
                 {
-                    sku: 'RG550-DY',
-                    price: 1299.99,
-                    stock: 6,
-                    attributes: { color: 'Desert Yellow', tremolo: 'Edge' },
-                },
-                {
-                    sku: 'RG550-RF',
-                    price: 1299.99,
-                    stock: 5,
-                    attributes: { color: 'Road Flare Red', tremolo: 'Edge' },
-                },
-            ],
-        });
-
-        // Create Products - KEYBOARDS & SYNTHS
-        console.log('🎹 Creating keyboard and synthesizer products...');
-
-        await Product.create({
-            name: 'Roland Fantom-8 Workstation',
-            description: '88-key flagship workstation with ZEN-Core sound engine, deep synthesis, and premium PHA-50 weighted keyboard. The ultimate creative powerhouse.',
-            category: 'Keyboards & Synthesizers',
-            imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800',
-            sellerId: seller2._id,
-            variants: [
-                {
-                    sku: 'FANTOM-8-BLK',
-                    price: 3999.99,
+                    sku: 'TAYLOR-214',
+                    price: 145000,
                     stock: 3,
-                    attributes: { keys: '88', action: 'Weighted', color: 'Black' },
+                    attributes: { wood: 'Koa', electronics: 'ES2' },
                 },
             ],
         });
 
+        // 3. Bass Guitars
         await Product.create({
-            name: 'Korg Minilogue XD Polyphonic Synthesizer',
-            description: 'Powerful 4-voice analog synthesizer with digital multi-engine. Features sequencer, effects, and oscilloscope display.',
-            category: 'Keyboards & Synthesizers',
-            imageUrl: 'https://images.unsplash.com/photo-1563330232-57114bb0823c?w=800',
-            sellerId: seller2._id,
-            variants: [
-                {
-                    sku: 'MINILOGUE-XD',
-                    price: 649.99,
-                    stock: 12,
-                    attributes: { voices: '4', type: 'Analog', color: 'Black' },
-                },
-            ],
-        });
-
-        await Product.create({
-            name: 'Yamaha P-125 Digital Piano',
-            description: 'Portable digital piano with 88-key Graded Hammer Standard action. Pure CF sound engine delivers authentic grand piano tone.',
-            category: 'Keyboards & Synthesizers',
-            imageUrl: 'https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?w=800',
-            sellerId: seller2._id,
-            variants: [
-                {
-                    sku: 'P125-BLK',
-                    price: 649.99,
-                    stock: 15,
-                    attributes: { keys: '88', color: 'Black', speakers: 'Built-in' },
-                },
-                {
-                    sku: 'P125-WHT',
-                    price: 649.99,
-                    stock: 10,
-                    attributes: { keys: '88', color: 'White', speakers: 'Built-in' },
-                },
-            ],
-        });
-
-        await Product.create({
-            name: 'Moog Subsequent 37 Analog Synthesizer',
-            description: 'Legendary Moog sound in a powerful paraphonic analog synthesizer. 37 keys, dual oscillators, and classic Moog ladder filter.',
-            category: 'Keyboards & Synthesizers',
-            imageUrl: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=800',
-            sellerId: seller2._id,
-            variants: [
-                {
-                    sku: 'SUB37-BLK',
-                    price: 1599.99,
-                    stock: 4,
-                    attributes: { keys: '37', type: 'Analog', voices: 'Paraphonic' },
-                },
-            ],
-        });
-
-        // Create Products - DRUMS & PERCUSSION
-        console.log('🥁 Creating drum and percussion products...');
-
-        await Product.create({
-            name: 'Pearl Export EXX 5-Piece Drum Kit',
-            description: 'Complete 5-piece drum set with hardware and cymbals. Perfect for beginners and intermediate players. Includes bass drum, snare, toms, hi-hat, and crash cymbal.',
-            category: 'Drums & Percussion',
-            imageUrl: 'https://images.unsplash.com/photo-1519892300165-cb5542fb47c7?w=800',
-            sellerId: seller3._id,
-            variants: [
-                {
-                    sku: 'EXPORT-JB',
-                    price: 899.99,
-                    stock: 8,
-                    attributes: { color: 'Jet Black', pieces: '5', hardware: 'Included' },
-                },
-                {
-                    sku: 'EXPORT-SB',
-                    price: 899.99,
-                    stock: 6,
-                    attributes: { color: 'Smokey Chrome', pieces: '5', hardware: 'Included' },
-                },
-            ],
-        });
-
-        await Product.create({
-            name: 'Roland TD-17KVX V-Drums Electronic Kit',
-            description: 'Premium electronic drum kit with mesh heads, advanced sound engine, and extensive coaching functions. Perfect for practice and performance.',
-            category: 'Drums & Percussion',
-            imageUrl: 'https://images.unsplash.com/photo-1571327073757-71d13c24de30?w=800',
-            sellerId: seller3._id,
-            variants: [
-                {
-                    sku: 'TD17KVX-001',
-                    price: 1799.99,
-                    stock: 5,
-                    attributes: { type: 'Electronic', pads: 'Mesh', module: 'TD-17' },
-                },
-            ],
-        });
-
-        await Product.create({
-            name: 'Zildjian A Custom Cymbal Set',
-            description: 'Professional cymbal pack including 14" hi-hats, 16" crash, 18" crash, and 20" ride. Brilliant finish with cutting projection.',
-            category: 'Drums & Percussion',
-            imageUrl: 'https://images.unsplash.com/photo-1614963366795-e9a73e5af4c5?w=800',
-            sellerId: seller3._id,
-            variants: [
-                {
-                    sku: 'ACUSTOM-SET',
-                    price: 899.99,
-                    stock: 10,
-                    attributes: { pieces: '4', finish: 'Brilliant', series: 'A Custom' },
-                },
-            ],
-        });
-
-        await Product.create({
-            name: 'DW Performance Series Snare Drum',
-            description: '14x6.5" maple snare with MAG throw-off and True-Pitch tuning. Versatile sound for any genre.',
-            category: 'Drums & Percussion',
-            imageUrl: 'https://images.unsplash.com/photo-1609347346838-8c2e8f7e5e3f?w=800',
-            sellerId: seller3._id,
-            variants: [
-                {
-                    sku: 'DW-SNARE-NAT',
-                    price: 549.99,
-                    stock: 12,
-                    attributes: { size: '14x6.5', material: 'Maple', finish: 'Natural' },
-                },
-                {
-                    sku: 'DW-SNARE-BLK',
-                    price: 549.99,
-                    stock: 8,
-                    attributes: { size: '14x6.5', material: 'Maple', finish: 'Black' },
-                },
-            ],
-        });
-
-        // Create Products - BASS GUITARS
-        console.log('🎸 Creating bass guitar products...');
-
-        await Product.create({
-            name: 'Fender Precision Bass American Professional II',
-            description: 'The legendary P-Bass with V-Mod II split-coil pickup and modern playability. The foundation of countless recordings.',
+            name: 'Fender Player Precision Bass',
+            description: 'Real Fender bass tone and style. The standard for bass players worldwide.',
             category: 'Bass Guitars',
             imageUrl: 'https://images.unsplash.com/photo-1556449895-a33c9dba33dd?w=800',
             sellerId: seller1._id,
             variants: [
                 {
-                    sku: 'PBASS-3TS',
-                    price: 1699.99,
-                    stock: 6,
-                    attributes: { color: '3-Color Sunburst', strings: '4' },
-                },
-                {
-                    sku: 'PBASS-BLK',
-                    price: 1699.99,
+                    sku: 'PBASS-PLr',
+                    price: 78000,
                     stock: 5,
-                    attributes: { color: 'Black', strings: '4' },
+                    attributes: { color: 'Polar White', strings: '4' },
                 },
             ],
         });
 
         await Product.create({
-            name: 'Music Man StingRay Special 5-String Bass',
-            description: '5-string bass with neodymium humbucker, active 3-band EQ, and roasted maple neck. Modern tone with vintage vibe.',
+            name: 'Ibanez SR300E Bass',
+            description: 'Compact body and slim neck, perfect for fast playing styles. Active EQ for versatile tones.',
             category: 'Bass Guitars',
             imageUrl: 'https://images.unsplash.com/photo-1510915228340-29c85a43dcfe?w=800',
             sellerId: seller1._id,
             variants: [
                 {
-                    sku: 'STINGRAY-CB',
-                    price: 2199.99,
-                    stock: 4,
-                    attributes: { color: 'Charcoal Blue', strings: '5' },
-                },
-                {
-                    sku: 'STINGRAY-VR',
-                    price: 2199.99,
-                    stock: 3,
-                    attributes: { color: 'Vintage Red', strings: '5' },
+                    sku: 'SR300E-IPT',
+                    price: 32000,
+                    stock: 10,
+                    attributes: { color: 'Iron Pewter', strings: '4' },
                 },
             ],
         });
 
-        // Create Products - ORCHESTRAL INSTRUMENTS
-        console.log('🎺 Creating orchestral instrument products...');
+        // 4. Keyboards & Synths
+        await Product.create({
+            name: 'Yamaha PSR-E473 Portable Keyboard',
+            description: 'Feature-packed keyboard ideal for performing musicians. Includes Indian instrument voices.',
+            category: 'Keyboards & Synthesizers',
+            imageUrl: 'https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?w=800',
+            sellerId: seller2._id,
+            variants: [
+                {
+                    sku: 'PSRE473',
+                    price: 24500,
+                    stock: 25,
+                    attributes: { keys: '61', type: 'Arranger' },
+                },
+            ],
+        });
 
         await Product.create({
+            name: 'Korg Kronos 2 Workstation',
+            description: 'The world-class workstation for professional touring and studio production.',
+            category: 'Keyboards & Synthesizers',
+            imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800',
+            sellerId: seller2._id,
+            variants: [
+                {
+                    sku: 'KRONOS2-88',
+                    price: 320000,
+                    stock: 2,
+                    attributes: { keys: '88', action: 'Weighted' },
+                },
+            ],
+        });
+
+        // 5. Drums & Percussion
+        await Product.create({
+            name: 'Mapex Tornado 5-Piece Drum Kit',
+            description: 'Complete drum set with cymbals and hardware. best value kit for beginners.',
+            category: 'Drums & Percussion',
+            imageUrl: 'https://images.unsplash.com/photo-1519892300165-cb5542fb47c7?w=800',
+            sellerId: seller3._id,
+            variants: [
+                {
+                    sku: 'TORNADO-BLK',
+                    price: 35000,
+                    stock: 8,
+                    attributes: { color: 'Black', pieces: '5' },
+                },
+            ],
+        });
+
+        await Product.create({
+            name: 'Roland TD-07KV Electronic V-Drums',
+            description: 'Compact electronic drum kit with mesh heads for quiet practice at home.',
+            category: 'Drums & Percussion',
+            imageUrl: 'https://images.unsplash.com/photo-1571327073757-71d13c24de30?w=800',
+            sellerId: seller3._id,
+            variants: [
+                {
+                    sku: 'TD07KV',
+                    price: 89000,
+                    stock: 4,
+                    attributes: { type: 'Electronic', brand: 'Roland' },
+                },
+            ],
+        });
+
+        // 6. Wind Instruments
+        await Product.create({
             name: 'Yamaha YAS-280 Alto Saxophone',
-            description: 'Student alto saxophone with improved key layout and response. Perfect for beginners with professional features.',
+            description: 'The golden standard student Saxophone. Reliable intonation and ease of play.',
             category: 'Wind Instruments',
             imageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800',
             sellerId: seller4._id,
             variants: [
                 {
-                    sku: 'YAS280-001',
-                    price: 1299.99,
-                    stock: 7,
-                    attributes: { type: 'Alto', finish: 'Gold Lacquer', case: 'Included' },
+                    sku: 'YAS280',
+                    price: 98000,
+                    stock: 5,
+                    attributes: { finish: 'Gold Lacquer', key: 'Eb' },
                 },
             ],
         });
 
         await Product.create({
-            name: 'Bach Stradivarius 180S37 Trumpet',
-            description: 'Professional Bb trumpet with .459" bore and #37 bell. The industry standard for classical and jazz.',
-            category: 'Brass Instruments',
-            imageUrl: 'https://images.unsplash.com/photo-1511192336575-5a79af67a629?w=800',
-            sellerId: seller4._id,
-            variants: [
-                {
-                    sku: 'BACH-180-SLV',
-                    price: 2899.99,
-                    stock: 3,
-                    attributes: { finish: 'Silver Plated', bore: '.459"', bell: '#37' },
-                },
-                {
-                    sku: 'BACH-180-LAC',
-                    price: 2799.99,
-                    stock: 4,
-                    attributes: { finish: 'Lacquer', bore: '.459"', bell: '#37' },
-                },
-            ],
-        });
-
-        await Product.create({
-            name: 'Yamaha YVS-100 Venova Wind Instrument',
-            description: 'Innovative casual wind instrument with saxophone-like sound. Perfect for beginners and portable practice.',
+            name: 'Hohner Silver Star Harmonica',
+            description: 'Classic blues harmonica. Key of C.',
             category: 'Wind Instruments',
             imageUrl: 'https://images.unsplash.com/photo-1465821185615-20b3c2fbf41b?w=800',
             sellerId: seller4._id,
             variants: [
                 {
-                    sku: 'VENOVA-WHT',
-                    price: 89.99,
-                    stock: 25,
-                    attributes: { color: 'White', material: 'ABS Resin', case: 'Included' },
-                },
-                {
-                    sku: 'VENOVA-BLK',
-                    price: 89.99,
-                    stock: 20,
-                    attributes: { color: 'Black', material: 'ABS Resin', case: 'Included' },
+                    sku: 'HOHNER-C',
+                    price: 1200,
+                    stock: 50,
+                    attributes: { key: 'C', type: 'Diatonic' },
                 },
             ],
         });
 
+        // 7. Audio Equipment
         await Product.create({
-            name: 'Eastman VL80 Violin Outfit',
-            description: 'Hand-carved student violin with ebony fittings. Includes bow, case, and rosin. Excellent tone for beginners.',
-            category: 'String Instruments',
-            imageUrl: 'https://images.unsplash.com/photo-1612225330812-01a9c6b355ec?w=800',
+            name: 'Shure SM58 Microphone',
+            description: 'Industry standard vocal microphone. Built like a tank.',
+            category: 'Audio Equipment',
+            imageUrl: 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=800',
             sellerId: seller4._id,
             variants: [
                 {
-                    sku: 'VL80-44',
-                    price: 599.99,
-                    stock: 10,
-                    attributes: { size: '4/4', finish: 'Antique Varnish', outfit: 'Complete' },
-                },
-                {
-                    sku: 'VL80-34',
-                    price: 549.99,
-                    stock: 8,
-                    attributes: { size: '3/4', finish: 'Antique Varnish', outfit: 'Complete' },
-                },
-            ],
-        });
-
-        // Create Products - AUDIO EQUIPMENT
-        console.log('🎚️ Creating audio equipment products...');
-
-        await Product.create({
-            name: 'Shure SM58 Dynamic Vocal Microphone',
-            description: 'The legendary live vocal microphone. Rugged construction, tailored frequency response, and built-in pop filter.',
-            category: 'Audio Equipment',
-            imageUrl: 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=800',
-            sellerId: seller2._id,
-            variants: [
-                {
                     sku: 'SM58-LC',
-                    price: 99.99,
-                    stock: 50,
-                    attributes: { type: 'Dynamic', pattern: 'Cardioid', cable: 'Not Included' },
+                    price: 9500,
+                    stock: 100,
+                    attributes: { type: 'Dynamic', application: 'Vocal' },
                 },
             ],
         });
 
         await Product.create({
-            name: 'Focusrite Scarlett 2i2 Audio Interface',
-            description: '2-in/2-out USB audio interface with studio-quality preamps. Perfect for home recording and podcasting.',
+            name: 'Focusrite Scarlett 2i2 Gen 4',
+            description: 'Most popular audio interface for home studios. High quality preamps.',
             category: 'Audio Equipment',
             imageUrl: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=800',
-            sellerId: seller2._id,
+            sellerId: seller4._id,
             variants: [
                 {
-                    sku: 'SCARLETT-2I2-3G',
-                    price: 179.99,
+                    sku: 'SCARLETT-2I2',
+                    price: 18500,
                     stock: 30,
-                    attributes: { inputs: '2', outputs: '2', generation: '3rd', connection: 'USB-C' },
+                    attributes: { brand: 'Focusrite', channels: '2' },
                 },
             ],
         });
 
+        // 8. Amplifiers
         await Product.create({
-            name: 'Boss Katana-50 MkII Guitar Amplifier',
-            description: '50-watt combo amp with five amp characters, effects, and power control. Perfect for practice and small gigs.',
+            name: 'Marshall MG15G Guitar Amp',
+            description: '15 Watt practice amp with that classic Marshall tone.',
             category: 'Amplifiers',
             imageUrl: 'https://images.unsplash.com/photo-1614963366795-e9a73e5af4c5?w=800',
             sellerId: seller1._id,
             variants: [
                 {
-                    sku: 'KATANA50-MK2',
-                    price: 259.99,
-                    stock: 20,
-                    attributes: { watts: '50', speaker: '12"', channels: '5' },
+                    sku: 'MG15G',
+                    price: 12500,
+                    stock: 15,
+                    attributes: { power: '15W', brand: 'Marshall' },
                 },
             ],
         });
 
-        console.log(`✅ Created 20 musical instrument products\n`);
+        await Product.create({
+            name: 'Blackstar Fly 3 Mini Amp',
+            description: 'Portable battery powered mini amp with surprising volume.',
+            category: 'Amplifiers',
+            imageUrl: 'https://images.unsplash.com/photo-1550985543-f4423c8d361e?w=800',
+            sellerId: seller1._id,
+            variants: [
+                {
+                    sku: 'FLY3',
+                    price: 6500,
+                    stock: 20,
+                    attributes: { power: '3W', portable: 'Yes' },
+                },
+            ],
+        });
 
-        // Create Discount Codes
+        console.log(`✅ Created products (2+ per category)\n`);
+
+        // Discounts
         console.log('🎟️  Creating discount codes...');
 
         await Discount.create({
-            code: 'MUSIC20',
+            code: 'DIWALI2026',
             type: DiscountType.PERCENTAGE,
             value: 20,
             sellerId: seller1._id,
-            minimumCartValue: 500,
+            minimumCartValue: 50000,
             maxUses: 100,
             currentUses: 0,
             isActive: true,
         });
 
         await Discount.create({
-            code: 'NEWPLAYER',
+            code: 'NEWYEAR',
             type: DiscountType.FLAT,
-            value: 50,
+            value: 5000,
             sellerId: seller2._id,
-            minimumCartValue: 200,
+            minimumCartValue: 40000,
             maxUses: 50,
             currentUses: 0,
             isActive: true,
         });
 
         await Discount.create({
-            code: 'DRUMMER15',
+            code: 'STUDENT10',
             type: DiscountType.PERCENTAGE,
-            value: 15,
+            value: 10,
             sellerId: seller3._id,
-            minimumCartValue: 300,
-            expiryDate: new Date('2026-12-31'),
-            maxUses: 75,
+            minimumCartValue: 20000,
+            maxUses: 200,
             currentUses: 0,
             isActive: true,
         });
 
-        await Discount.create({
-            code: 'ORCHESTRA100',
-            type: DiscountType.FLAT,
-            value: 100,
-            sellerId: seller4._id,
-            minimumCartValue: 1000,
-            maxUses: 25,
-            currentUses: 0,
-            isActive: true,
-        });
+        console.log('✅ Created 3 discount codes\n');
 
-        await Discount.create({
-            code: 'FREESHIP',
-            type: DiscountType.FLAT,
-            value: 25,
-            sellerId: seller1._id,
-            minimumCartValue: 100,
-            currentUses: 0,
-            isActive: true,
-        });
-
-        console.log('✅ Created 5 discount codes\n');
-
-        // Summary
-        console.log('═══════════════════════════════════════════════════════');
-        console.log('🎉 SEEDING COMPLETE!\n');
-        console.log('📊 Summary:');
-        console.log('   • 3 Buyers created');
-        console.log('   • 4 Sellers created');
-        console.log('   • 20 Musical instrument products created');
-        console.log('   • 5 Discount codes created\n');
-
-        console.log('🔑 Login Credentials (all passwords: password123):');
-        console.log('\n   BUYERS:');
-        console.log('   • john.musician@example.com');
-        console.log('   • sarah.guitarist@example.com');
-        console.log('   • mike.drummer@example.com');
-
-        console.log('\n   SELLERS:');
-        console.log('   • guitar.heaven@gearswap.com');
-        console.log('   • keys.and.synths@gearswap.com');
-        console.log('   • drum.world@gearswap.com');
-        console.log('   • brass.and.strings@gearswap.com');
-
-        console.log('\n🎟️  Discount Codes:');
-        console.log('   • MUSIC20 - 20% off orders over $500');
-        console.log('   • NEWPLAYER - $50 off orders over $200');
-        console.log('   • DRUMMER15 - 15% off orders over $300');
-        console.log('   • ORCHESTRA100 - $100 off orders over $1000');
-        console.log('   • FREESHIP - $25 off orders over $100');
-
-        console.log('\n🎸 Product Categories:');
-        console.log('   • Electric Guitars (4 products)');
-        console.log('   • Acoustic Guitars (1 product)');
-        console.log('   • Bass Guitars (2 products)');
-        console.log('   • Keyboards & Synthesizers (4 products)');
-        console.log('   • Drums & Percussion (4 products)');
-        console.log('   • Wind Instruments (2 products)');
-        console.log('   • Brass Instruments (1 product)');
-        console.log('   • String Instruments (1 product)');
-        console.log('   • Audio Equipment (2 products)');
-        console.log('   • Amplifiers (1 product)');
-
-        console.log('\n🚀 Next Steps:');
-        console.log('   1. Start the backend: npm run dev');
-        console.log('   2. Visit http://localhost:4000/graphql');
-        console.log('   3. Login with any buyer/seller credentials');
-        console.log('   4. Browse musical instruments and test the marketplace!');
-        console.log('═══════════════════════════════════════════════════════\n');
+        console.log('🎉 SEEDING COMPLETE (India Localization + Expanded Catalog)!');
 
     } catch (error) {
         console.error('❌ Seeding failed:', error);
         process.exit(1);
     } finally {
         await mongoose.connection.close();
-        console.log('🔌 Database connection closed');
         process.exit(0);
     }
 }
 
-// Run seeder
 seed();

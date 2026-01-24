@@ -4,6 +4,7 @@ import { useQuery } from '@apollo/client';
 import { GET_MY_ORDERS } from '@/graphql/queries';
 import { Navbar } from '@/components/Navbar';
 import { Card } from '@/components/ui/Card';
+import { formatPrice } from '@/lib/utils';
 
 export default function BuyerOrdersPage() {
   const { data, loading } = useQuery(GET_MY_ORDERS);
@@ -64,7 +65,7 @@ export default function BuyerOrdersPage() {
                       <span className="text-gray-600"> × {item.quantity}</span>
                       <span className="text-gray-500 ml-2">({item.variantSku})</span>
                     </div>
-                    <span className="font-semibold">${item.subtotal.toFixed(2)}</span>
+                    <span className="font-semibold">{formatPrice(item.subtotal)}</span>
                   </div>
                 ))}
               </div>
@@ -72,17 +73,17 @@ export default function BuyerOrdersPage() {
               <div className="pt-4 border-t border-gray-200 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Subtotal:</span>
-                  <span>${order.subtotal.toFixed(2)}</span>
+                  <span>{formatPrice(order.subtotal)}</span>
                 </div>
                 {order.discount > 0 && (
                   <div className="flex justify-between text-sm text-green-600">
                     <span>Discount {order.discountCode && `(${order.discountCode})`}:</span>
-                    <span>-${order.discount.toFixed(2)}</span>
+                    <span>-{formatPrice(order.discount)}</span>
                   </div>
                 )}
                 <div className="flex justify-between font-bold text-lg pt-2 border-t border-gray-200">
                   <span>Total:</span>
-                  <span className="text-primary-600">${order.total.toFixed(2)}</span>
+                  <span className="text-primary-600">{formatPrice(order.total)}</span>
                 </div>
               </div>
             </Card>

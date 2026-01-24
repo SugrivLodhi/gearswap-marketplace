@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
 import Image from 'next/image';
+import { formatPrice } from '@/lib/utils';
 
 export default function SellerProductsPage() {
   const { user } = useAuth();
@@ -79,7 +80,7 @@ export default function SellerProductsPage() {
                   <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
                     {product.variants.map((variant: any) => (
                       <span key={variant.id} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200">
-                        {variant.sku} - ${variant.price} ({variant.stock} in stock)
+                        {variant.sku} - {formatPrice(variant.price)} ({variant.stock} in stock)
                       </span>
                     ))}
                   </div>

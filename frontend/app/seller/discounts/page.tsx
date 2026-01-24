@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { useState } from 'react';
 import Link from 'next/link';
+import { formatPrice } from '@/lib/utils';
 
 export default function SellerDiscountsPage() {
   const { data, loading, refetch } = useQuery(GET_MY_DISCOUNTS);
@@ -49,18 +50,18 @@ export default function SellerDiscountsPage() {
                   <p className="text-sm text-gray-500">Created {new Date(parseInt(discount.createdAt)).toLocaleDateString()}</p>
                 </div>
 
-                <div className="space-y-3 mb-6">
+                  <div className="space-y-3 mb-6">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Value:</span>
                     <span className="font-semibold">
-                      {discount.type === 'PERCENTAGE' ? `${discount.value}% OFF` : `$${discount.value} OFF`}
+                      {discount.type === 'PERCENTAGE' ? `${discount.value}% OFF` : `${formatPrice(discount.value)} OFF`}
                     </span>
                   </div>
                   
                   {discount.minimumCartValue && (
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Min. Order:</span>
-                      <span className="font-medium">${discount.minimumCartValue}</span>
+                      <span className="font-medium">{formatPrice(discount.minimumCartValue)}</span>
                     </div>
                   )}
 

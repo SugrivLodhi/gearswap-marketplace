@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { formatPrice } from '@/lib/utils';
 
 export default function CartPage() {
   const router = useRouter();
@@ -113,7 +114,7 @@ export default function CartPage() {
                     <div className="flex-1">
                       <h3 className="text-lg font-semibold text-gray-900">{item.productName}</h3>
                       <p className="text-sm text-gray-600">SKU: {item.variantSku}</p>
-                      <p className="text-lg font-bold text-primary-600 mt-2">${item.price.toFixed(2)}</p>
+                      <p className="text-lg font-bold text-primary-600 mt-2">{formatPrice(item.price)}</p>
                     </div>
 
                     <div className="flex items-center space-x-4">
@@ -148,7 +149,7 @@ export default function CartPage() {
                   <div className="mt-4 pt-4 border-t border-gray-200">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Subtotal:</span>
-                      <span className="font-semibold">${item.subtotal.toFixed(2)}</span>
+                      <span className="font-semibold">{formatPrice(item.subtotal)}</span>
                     </div>
                   </div>
                 </Card>
@@ -163,20 +164,20 @@ export default function CartPage() {
                 <div className="space-y-3 mb-6">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Subtotal:</span>
-                    <span className="font-semibold">${cart.subtotal.toFixed(2)}</span>
+                    <span className="font-semibold">{formatPrice(cart.subtotal)}</span>
                   </div>
 
                   {cart.discount > 0 && (
                     <div className="flex justify-between text-sm text-green-600">
                       <span>Discount:</span>
-                      <span className="font-semibold">-${cart.discount.toFixed(2)}</span>
+                      <span className="font-semibold">-{formatPrice(cart.discount)}</span>
                     </div>
                   )}
 
                   <div className="pt-3 border-t border-gray-200">
                     <div className="flex justify-between">
                       <span className="text-lg font-bold">Total:</span>
-                      <span className="text-lg font-bold text-primary-600">${cart.total.toFixed(2)}</span>
+                      <span className="text-lg font-bold text-primary-600">{formatPrice(cart.total)}</span>
                     </div>
                   </div>
                 </div>

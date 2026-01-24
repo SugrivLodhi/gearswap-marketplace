@@ -82,7 +82,7 @@ export default function CreateDiscountPage() {
                   className="input"
                 >
                   <option value="PERCENTAGE">Percentage (%)</option>
-                  <option value="FLAT">Flat Amount ($)</option>
+                  <option value="FLAT">Flat Amount (₹)</option>
                 </select>
               </div>
 
@@ -93,7 +93,7 @@ export default function CreateDiscountPage() {
                   name="value"
                   value={formData.value}
                   onChange={handleChange}
-                  placeholder={formData.type === 'PERCENTAGE' ? '20' : '10.00'}
+                  placeholder={formData.type === 'PERCENTAGE' ? '20' : '500.00'}
                   className="input"
                   min="0"
                   step={formData.type === 'PERCENTAGE' ? '1' : '0.01'}
@@ -110,7 +110,7 @@ export default function CreateDiscountPage() {
                   name="minimumCartValue"
                   value={formData.minimumCartValue}
                   onChange={handleChange}
-                  placeholder="50.00"
+                  placeholder="2000.00"
                   className="input"
                   min="0"
                 />

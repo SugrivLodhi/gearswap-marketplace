@@ -84,10 +84,14 @@ export default function HomePage() {
               className="input"
             >
               <option value="">All Categories</option>
-              <option value="Electronics">Electronics</option>
-              <option value="Clothing">Clothing</option>
-              <option value="Home">Home & Garden</option>
-              <option value="Sports">Sports & Outdoors</option>
+              <option value="Electric Guitars">Electric Guitars</option>
+              <option value="Acoustic Guitars">Acoustic Guitars</option>
+              <option value="Bass Guitars">Bass Guitars</option>
+              <option value="Keyboards & Synthesizers">Keyboards & Synths</option>
+              <option value="Drums & Percussion">Drums & Percussion</option>
+              <option value="Wind Instruments">Wind Instruments</option>
+              <option value="Audio Equipment">Audio Equipment</option>
+              <option value="Amplifiers">Amplifiers</option>
             </select>
           </div>
         </div>

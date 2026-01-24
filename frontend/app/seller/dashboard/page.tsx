@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { formatPrice } from '@/lib/utils';
 
 export default function SellerDashboardPage() {
   const { user, isSeller, isAuthenticated } = useAuth();
@@ -52,7 +53,7 @@ export default function SellerDashboardPage() {
           <Card className="p-6 bg-gradient-to-br from-blue-500 to-blue-600 text-white">
             <h3 className="text-lg font-medium opacity-90">Total Revenue</h3>
             <p className="text-4xl font-bold mt-2">
-              ${stats.totalRevenue.toFixed(2)}
+              {formatPrice(stats.totalRevenue)}
             </p>
           </Card>
           
@@ -124,7 +125,7 @@ export default function SellerDashboardPage() {
                         {order.items.length} items
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
-                        ${order.total.toFixed(2)}
+                        {formatPrice(order.total)}
                       </td>
                     </tr>
                   ))}
