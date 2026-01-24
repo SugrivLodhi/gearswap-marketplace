@@ -8,17 +8,20 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  // const [error, setError] = useState('');
   const { login } = useAuth();
+  const router = useRouter();
 
   const [loginMutation, { loading }] = useMutation(LOGIN);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
 
     try {
       const { data } = await loginMutation({
@@ -28,8 +31,15 @@ export default function LoginPage() {
       });
 
       login(data.login.token, data.login.user);
+      toast.success('Login successful!');
+
+      if (data.login.user.role === 'SELLER') {
+        router.push('/seller/dashboard');
+      } else {
+        router.push('/');
+      }
     } catch (err: any) {
-      setError(err.message);
+      toast.error(err.message);
     }
   };
 
@@ -44,11 +54,6 @@ export default function LoginPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-              {error}
-            </div>
-          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">

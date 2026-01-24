@@ -6,17 +6,22 @@ import { ProductCard } from '@/components/ProductCard';
 import { Navbar } from '@/components/Navbar';
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
+import { useDebounce } from 'use-debounce';
+import { toast } from 'sonner';
 
 export default function HomePage() {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('');
   const { isBuyer } = useAuth();
 
+  const [debouncedSearch] = useDebounce(search, 500);
+  const [debouncedCategory] = useDebounce(category, 500);
+
   const { data, loading, error, fetchMore } = useQuery(GET_PRODUCTS, {
     variables: {
       filters: {
-        search: search || undefined,
-        category: category || undefined,
+        search: debouncedSearch || undefined,
+        category: debouncedCategory || undefined,
       },
       pagination: {
         limit: 12,
@@ -30,7 +35,7 @@ export default function HomePage() {
 
   const handleAddToCart = async (productId: string, variantId: string) => {
     if (!isBuyer) {
-      alert('Please login as a buyer to add items to cart');
+      toast.error('Please login as a buyer to add items to cart');
       return;
     }
 
@@ -44,9 +49,9 @@ export default function HomePage() {
           },
         },
       });
-      alert('Added to cart!');
+      toast.success('Added to cart!');
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err.message);
     }
   };
 

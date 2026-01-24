@@ -7,14 +7,11 @@ import { Navbar } from '@/components/Navbar';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 export default function CreateProductPage() {
   const router = useRouter();
   const [createProduct, { loading }] = useMutation(CREATE_PRODUCT, {
-    // We would assume we want to refetch the products list this seller views
-    // But since the query there filters by sellerId via context/args,
-    // just refetching GET_PRODUCTS might not be precise without args.
-    // However, Apollo cache updates are best effort here.
     refetchQueries: [GET_PRODUCTS], 
   });
 
@@ -23,44 +20,64 @@ export default function CreateProductPage() {
     description: '',
     category: 'Electric Guitars',
     imageUrl: '',
-    // Just support one variant for MVP creation to keep it simple
-    sku: '',
-    price: '',
-    stock: '',
-    color: ''
   });
+
+  // For simplicity, we'll manage a single variant for now, but structured as an array
+  // to easily extend to multiple variants later.
+  const [variants, setVariants] = useState([
+    {
+      sku: '',
+      price: '',
+      stock: '',
+      color: '' // Example attribute
+    }
+  ]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleVariantChange = (index: number, e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    const newVariants = [...variants];
+    // @ts-ignore
+    newVariants[index][name] = value;
+    setVariants(newVariants);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Basic validation
+    if (variants.length === 0 || variants[0].sku === '' || variants[0].price === '' || variants[0].stock === '') {
+      toast.error('Please fill in all required variant details.');
+      return;
+    }
+
     try {
       await createProduct({
         variables: {
           input: {
-            name: formData.name,
-            description: formData.description,
-            category: formData.category,
-            imageUrl: formData.imageUrl,
-            variants: [
-              {
-                sku: formData.sku,
-                price: parseFloat(formData.price),
-                stock: parseInt(formData.stock),
-                attributes: formData.color ? [{ key: 'color', value: formData.color }] : []
-              }
-            ]
+            ...formData,
+            variants: variants.map(v => ({
+              sku: v.sku,
+              price: parseFloat(v.price),
+              stock: parseInt(v.stock),
+              attributes: v.color ? [{ key: 'color', value: v.color }] : []
+            }))
           }
         }
       });
+      toast.success('Product created successfully!');
       router.push('/seller/products');
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err.message);
     }
   };
+
+  // Assuming we are only showing one variant for creation based on the original code structure
+  const currentVariant = variants[0];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -112,9 +129,11 @@ export default function CreateProductPage() {
                     <option value="Electric Guitars">Electric Guitars</option>
                     <option value="Acoustic Guitars">Acoustic Guitars</option>
                     <option value="Bass Guitars">Bass Guitars</option>
-                    <option value="Keyboards">Keyboards & Synths</option>
-                    <option value="Drums">Drums & Percussion</option>
+                    <option value="Keyboards & Synthesizers">Keyboards & Synths</option>
+                    <option value="Drums & Percussion">Drums & Percussion</option>
+                    <option value="Wind Instruments">Wind Instruments</option>
                     <option value="Audio Equipment">Audio Equipment</option>
+                    <option value="Amplifiers">Amplifiers</option>
                   </select>
                 </div>
 
@@ -143,8 +162,8 @@ export default function CreateProductPage() {
                   <input
                     type="text"
                     name="sku"
-                    value={formData.sku}
-                    onChange={handleChange}
+                    value={currentVariant.sku}
+                    onChange={(e) => handleVariantChange(0, e)}
                     placeholder="STRAT-001"
                     className="input"
                     required
@@ -156,8 +175,8 @@ export default function CreateProductPage() {
                   <input
                     type="number"
                     name="price"
-                    value={formData.price}
-                    onChange={handleChange}
+                    value={currentVariant.price}
+                    onChange={(e) => handleVariantChange(0, e)}
                     className="input"
                     min="0"
                     step="0.01"
@@ -170,8 +189,8 @@ export default function CreateProductPage() {
                   <input
                     type="number"
                     name="stock"
-                    value={formData.stock}
-                    onChange={handleChange}
+                    value={currentVariant.stock}
+                    onChange={(e) => handleVariantChange(0, e)}
                     className="input"
                     min="0"
                     required
@@ -183,8 +202,8 @@ export default function CreateProductPage() {
                   <input
                     type="text"
                     name="color"
-                    value={formData.color}
-                    onChange={handleChange}
+                    value={currentVariant.color}
+                    onChange={(e) => handleVariantChange(0, e)}
                     placeholder="Sunburst"
                     className="input"
                   />

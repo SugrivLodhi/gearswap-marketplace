@@ -7,6 +7,7 @@ import { Navbar } from '@/components/Navbar';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 export default function CreateDiscountPage() {
   const router = useRouter();
@@ -34,18 +35,19 @@ export default function CreateDiscountPage() {
       await createDiscount({
         variables: {
           input: {
-            code: formData.code.toUpperCase(),
+            code: formData.code,
             type: formData.type,
             value: parseFloat(formData.value),
-            minimumCartValue: formData.minimumCartValue ? parseFloat(formData.minimumCartValue) : null,
-            maxUses: formData.maxUses ? parseInt(formData.maxUses) : null,
-            expiryDate: formData.expiryDate ? new Date(formData.expiryDate).toISOString() : null,
+            minimumCartValue: formData.minimumCartValue ? parseFloat(formData.minimumCartValue) : undefined,
+            expiryDate: formData.expiryDate || undefined,
+            maxUses: formData.maxUses ? parseInt(formData.maxUses) : undefined
           }
         }
       });
+      toast.success('Discount created successfully!');
       router.push('/seller/discounts');
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err.message);
     }
   };
 

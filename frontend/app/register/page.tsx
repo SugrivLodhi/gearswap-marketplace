@@ -8,29 +8,33 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<UserRole>(UserRole.BUYER);
-  const [error, setError] = useState('');
+  const [role, setRole] = useState('BUYER');
+  // const [error, setError] = useState(''); // Unused
   const { login } = useAuth();
+  const router = useRouter();
 
-  const [registerMutation, { loading }] = useMutation(REGISTER);
+  const [register, { loading }] = useMutation(REGISTER); // Renamed registerMutation to register
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    // setError(''); // Removed as per instruction
 
     try {
-      const { data } = await registerMutation({
+      await register({ // Changed registerMutation to register
         variables: {
           input: { email, password, role },
         },
       });
-
-      login(data.register.token, data.register.user);
+      toast.success('Registration successful! Please login.');
+      router.push('/login');
     } catch (err: any) {
-      setError(err.message);
+      toast.error(err.message); // Replaced setError with toast.error
     }
   };
 
@@ -45,11 +49,6 @@ export default function RegisterPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-              {error}
-            </div>
-          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">

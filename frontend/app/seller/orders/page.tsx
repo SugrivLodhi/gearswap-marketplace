@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { useState } from 'react';
 import { formatPrice } from '@/lib/utils';
 import Link from 'next/link';
+import { toast } from 'sonner';
 
 export default function SellerOrdersPage() {
   const { data, loading, refetch } = useQuery(GET_SELLER_ORDERS);
@@ -24,8 +25,9 @@ export default function SellerOrdersPage() {
         }
       });
       await refetch();
+      toast.success(`Order marked as ${newStatus}`);
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err.message);
     } finally {
       setUpdatingId(null);
     }

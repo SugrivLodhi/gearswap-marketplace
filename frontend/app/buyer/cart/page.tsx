@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { formatPrice } from '@/lib/utils';
+import { toast } from 'sonner';
 
 export default function CartPage() {
   const router = useRouter();
@@ -32,7 +33,7 @@ export default function CartPage() {
       });
       refetch();
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err.message);
     }
   };
 
@@ -41,9 +42,10 @@ export default function CartPage() {
       await removeFromCart({
         variables: { productId, variantId },
       });
+      toast.success('Item removed');
       refetch();
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err.message);
     }
   };
 
@@ -55,8 +57,10 @@ export default function CartPage() {
       });
       refetch();
       setDiscountCode('');
+      toast.success('Discount applied!');
     } catch (err: any) {
       setDiscountError(err.message);
+      toast.error(err.message);
     }
   };
 
@@ -64,18 +68,19 @@ export default function CartPage() {
     try {
       await removeDiscount();
       refetch();
+      toast.info('Discount removed');
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err.message);
     }
   };
 
   const handleCheckout = async () => {
     try {
       await checkout();
-      alert('Order placed successfully!');
+      toast.success('Order placed successfully! 🎵');
       router.push('/buyer/orders');
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err.message);
     }
   };
 
