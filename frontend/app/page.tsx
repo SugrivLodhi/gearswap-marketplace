@@ -133,6 +133,18 @@ export default function HomePage() {
                       limit: 12,
                     },
                   },
+                  updateQuery: (prev, { fetchMoreResult }) => {
+                    if (!fetchMoreResult) return prev;
+                    return {
+                      products: {
+                        ...fetchMoreResult.products,
+                        edges: [
+                          ...prev.products.edges,
+                          ...fetchMoreResult.products.edges,
+                        ],
+                      },
+                    };
+                  },
                 })
               }
               className="btn-primary"

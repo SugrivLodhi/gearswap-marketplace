@@ -181,6 +181,25 @@ export const APPLY_DISCOUNT = gql`
   }
 `;
 
+export const REMOVE_DISCOUNT = gql`
+  mutation RemoveDiscount {
+    removeDiscount {
+      items {
+        productId
+        variantId
+        productName
+        variantSku
+        price
+        quantity
+        subtotal
+      }
+      subtotal
+      discount
+      total
+    }
+  }
+`;
+
 // Order Mutations & Queries
 export const CHECKOUT = gql`
   mutation Checkout {
@@ -284,6 +303,16 @@ export const GET_SELLER_ORDERS = gql`
       subtotal
       total
       createdAt
+    }
+  }
+`;
+
+export const GET_SELLER_STATS = gql`
+  query GetSellerStats {
+    sellerStats {
+      totalOrders
+      totalRevenue
+      pendingOrders
     }
   }
 `;

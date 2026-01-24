@@ -1,12 +1,19 @@
 import { Product, IProduct, IVariant } from './product.model';
 import mongoose from 'mongoose';
 
+export interface VariantInput {
+    sku: string;
+    price: number;
+    stock: number;
+    attributes: Array<{ key: string; value: string }>;
+}
+
 export interface CreateProductInput {
     name: string;
     description: string;
     category: string;
     imageUrl: string;
-    variants: IVariant[];
+    variants: VariantInput[];
 }
 
 export interface UpdateProductInput {
@@ -14,7 +21,7 @@ export interface UpdateProductInput {
     description?: string;
     category?: string;
     imageUrl?: string;
-    variants?: IVariant[];
+    variants?: VariantInput[];
 }
 
 export interface ProductFilters {
@@ -43,6 +50,22 @@ export interface ProductConnection {
 
 class ProductService {
     /**
+     * Helper to convert array attributes to object for Mongoose Map
+     */
+    private transformAttributes(variants: VariantInput[]): any[] {
+        return variants.map(v => {
+            const attributesMap: Record<string, string> = {};
+            v.attributes.forEach(attr => {
+                attributesMap[attr.key] = attr.value;
+            });
+            return {
+                ...v,
+                attributes: attributesMap
+            };
+        });
+    }
+
+    /**
      * Create a new product (seller only)
      */
     async createProduct(
@@ -63,13 +86,15 @@ class ProductService {
             throw new Error('Duplicate SKUs found in variants');
         }
 
+        const transformedVariants = this.transformAttributes(variants);
+
         const product = await Product.create({
             name,
             description,
             category,
             imageUrl,
             sellerId: new mongoose.Types.ObjectId(sellerId),
-            variants,
+            variants: transformedVariants,
         });
 
         return product;
@@ -112,7 +137,7 @@ class ProductService {
                 throw new Error('Duplicate SKUs found in variants');
             }
 
-            product.variants = input.variants;
+            product.variants = this.transformAttributes(input.variants) as any;
         }
 
         await product.save();

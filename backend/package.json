@@ -10,7 +10,8 @@
     "test": "jest --coverage",
     "test:watch": "jest --watch",
     "seed": "ts-node src/scripts/seed.ts",
-    "verify": "ts-node src/scripts/verify.ts"
+    "verify": "ts-node src/scripts/verify.ts",
+    "test:product": "ts-node src/scripts/test-product.ts"
   },
   "keywords": ["marketplace", "graphql", "typescript"],
   "author": "",
