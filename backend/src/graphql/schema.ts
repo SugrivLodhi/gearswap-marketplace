@@ -248,6 +248,7 @@ export const typeDefs = gql`
 
     # Discounts (Seller)
     myDiscounts: [Discount!]!
+    discount(id: ID!): Discount
 
     # Discount validation (Public)
     validateDiscount(code: String!, cartValue: Float!): DiscountValidation!

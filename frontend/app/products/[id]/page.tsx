@@ -57,6 +57,7 @@ export default function ProductDetailPage() {
         },
       });
       toast.success('Added to cart!');
+      router.push('/buyer/cart');
     } catch (err: any) {
       toast.error(err.message);
     }

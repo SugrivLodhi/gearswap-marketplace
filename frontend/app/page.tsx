@@ -5,11 +5,13 @@ import { GET_PRODUCTS, ADD_TO_CART } from '@/graphql/queries';
 import { ProductCard } from '@/components/ProductCard';
 import { Navbar } from '@/components/Navbar';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { useDebounce } from 'use-debounce';
 import { toast } from 'sonner';
 
 export default function HomePage() {
+  const router = useRouter();
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('');
   const { isBuyer } = useAuth();

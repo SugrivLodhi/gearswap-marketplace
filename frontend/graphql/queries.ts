@@ -287,6 +287,12 @@ export const UPDATE_PRODUCT = gql`
   }
 `;
 
+export const DELETE_PRODUCT = gql`
+  mutation DeleteProduct($id: ID!) {
+    deleteProduct(id: $id)
+  }
+`;
+
 export const GET_SELLER_ORDERS = gql`
   query GetSellerOrders {
     sellerOrders {
@@ -355,6 +361,37 @@ export const GET_MY_DISCOUNTS = gql`
       currentUses
       isActive
       createdAt
+    }
+  }
+`;
+
+export const GET_DISCOUNT = gql`
+  query GetDiscount($id: ID!) {
+    discount(id: $id) {
+      id
+      code
+      type
+      value
+      expiryDate
+      minimumCartValue
+      maxUses
+      currentUses
+      isActive
+    }
+  }
+`;
+
+export const UPDATE_DISCOUNT = gql`
+  mutation UpdateDiscount($id: ID!, $input: UpdateDiscountInput!) {
+    updateDiscount(id: $id, input: $input) {
+      id
+      code
+      type
+      value
+      expiryDate
+      minimumCartValue
+      maxUses
+      isActive
     }
   }
 `;

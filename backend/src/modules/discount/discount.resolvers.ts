@@ -13,6 +13,16 @@ export const discountResolvers = {
             return discountService.listSellerDiscounts(user.userId);
         },
 
+        // Seller only: Get single discount
+        discount: async (_: any, { id }: { id: string }, context: GraphQLContext) => {
+            const user = requireSeller(context);
+            const discount = await discountService.getDiscountById(id);
+            if (!discount) throw new Error('Discount not found');
+            // Check ownership
+            if (discount.sellerId.toString() !== user.userId) throw new Error('Access denied');
+            return discount;
+        },
+
         // Public: Validate discount (for cart preview)
         validateDiscount: async (
             _: any,

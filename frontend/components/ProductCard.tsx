@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
+import { formatPrice } from '@/lib/utils';
 
 interface Product {
   id: string;
@@ -63,11 +64,11 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
           <div>
             {minPrice === maxPrice ? (
               <span className="text-xl font-bold text-gray-900">
-                ${minPrice.toFixed(2)}
+                {formatPrice(minPrice)}
               </span>
             ) : (
               <span className="text-xl font-bold text-gray-900">
-                ${minPrice.toFixed(2)} - ${maxPrice.toFixed(2)}
+                {formatPrice(minPrice)} - {formatPrice(maxPrice)}
               </span>
             )}
           </div>

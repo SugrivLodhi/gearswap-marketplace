@@ -1,16 +1,44 @@
 'use client';
 
 import { useQuery, useMutation } from '@apollo/client';
-import { GET_MY_DISCOUNTS, CREATE_DISCOUNT } from '@/graphql/queries';
+import { GET_MY_DISCOUNTS, CREATE_DISCOUNT, UPDATE_DISCOUNT } from '@/graphql/queries';
 import { Navbar } from '@/components/Navbar';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { useState } from 'react';
 import Link from 'next/link';
 import { formatPrice } from '@/lib/utils';
+import { toast } from 'sonner';
 
 export default function SellerDiscountsPage() {
   const { data, loading, refetch } = useQuery(GET_MY_DISCOUNTS);
+
+  const [updateDiscount, { loading: updating }] = useMutation(UPDATE_DISCOUNT, {
+    onCompleted: () => {
+      toast.success('Discount updated successfully');
+      refetch();
+    },
+    onError: (err) => {
+      toast.error(err.message);
+    }
+  });
+
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<() => void>(() => {});
+  const [confirmMessage, setConfirmMessage] = useState('');
+
+  const handleDeactivate = (id: string, currentStatus: boolean) => {
+    if (!currentStatus) return;
+    
+    setConfirmMessage('Are you sure you want to deactivate this discount?');
+    setConfirmAction(() => () => updateDiscount({
+      variables: {
+        id,
+        input: { isActive: false }
+      }
+    }));
+    setShowConfirm(true);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -83,11 +111,43 @@ export default function SellerDiscountsPage() {
                 </div>
 
                 <div className="flex gap-2">
-                  <Button variant="secondary" size="sm" className="w-full">Edit</Button>
-                  <Button variant="danger" size="sm" className="w-full">Deactivate</Button>
+                  <Link href={`/seller/discounts/${discount.id}`} className="w-full">
+                    <Button variant="secondary" size="sm" className="w-full">Edit</Button>
+                  </Link>
+                  <Button 
+                    variant="danger" 
+                    size="sm" 
+                    className="w-full"
+                    disabled={!discount.isActive || updating}
+                    onClick={() => handleDeactivate(discount.id, discount.isActive)}
+                  >
+                    Deactivate
+                  </Button>
                 </div>
               </Card>
             ))}
+          </div>
+        )}
+
+        {/* Confirmation Modal */}
+        {showConfirm && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full animate-in fade-in zoom-in duration-200">
+              <h3 className="text-lg font-bold mb-2">Confirm Action</h3>
+              <p className="text-gray-600 mb-6">{confirmMessage}</p>
+              <div className="flex justify-end gap-3">
+                <Button variant="secondary" onClick={() => setShowConfirm(false)}>Cancel</Button>
+                <Button 
+                  variant="danger" 
+                  onClick={() => {
+                    confirmAction();
+                    setShowConfirm(false);
+                  }}
+                >
+                  Confirm
+                </Button>
+              </div>
+            </div>
           </div>
         )}
       </main>

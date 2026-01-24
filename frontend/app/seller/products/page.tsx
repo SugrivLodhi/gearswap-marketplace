@@ -1,7 +1,7 @@
 'use client';
 
-import { useQuery } from '@apollo/client';
-import { GET_PRODUCTS } from '@/graphql/queries';
+import { useQuery, useMutation } from '@apollo/client';
+import { GET_PRODUCTS, DELETE_PRODUCT } from '@/graphql/queries';
 import { Navbar } from '@/components/Navbar';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -9,29 +9,49 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
 import Image from 'next/image';
 import { formatPrice } from '@/lib/utils';
+import { toast } from 'sonner';
+import { useState } from 'react';
 
 export default function SellerProductsPage() {
   const { user } = useAuth();
-
-  // Note: ideally we would have a specific "myProducts" query or filter,
-  // but for now we'll fetch products and filter by seller ID on client if needed,
-  // or rely on the query to allow filtering by current user context effectively.
-  // The current schema GET_PRODUCTS takes filters. Let's assume we can filter by sellerId.
-  // Actually, let's just use the generic products query and filter client-side for this MVP
-  // or pass the sellerId in the filter if the API supports it publically.
-  // Based on schema `input ProductFilters { sellerId: ID ... }`, we can do that.
   
-  const { data, loading, error } = useQuery(GET_PRODUCTS, {
+  const { data, loading, error, refetch } = useQuery(GET_PRODUCTS, {
     variables: {
       filters: {
         sellerId: user?.id
       },
       pagination: {
-        limit: 50 // Fetch enough for the dashboard
+        limit: 50
       }
     },
     skip: !user?.id
   });
+
+  const [deleteProduct, { loading: deleting }] = useMutation(DELETE_PRODUCT, {
+    onCompleted: () => {
+      toast.success('Product deleted successfully');
+      refetch();
+    },
+    onError: (err) => {
+      toast.error(err.message);
+    }
+  });
+
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const handleDelete = (id: string) => {
+    setDeleteId(id);
+    setShowConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    if (deleteId) {
+      await deleteProduct({ variables: { id: deleteId } });
+      setDeleteId(null);
+      setShowConfirm(false);
+    }
+  };
 
   const products = data?.products?.edges?.map((edge: any) => edge.node) || [];
 
@@ -90,10 +110,37 @@ export default function SellerProductsPage() {
                   <Link href={`/seller/products/edit/${product.id}`}>
                     <Button variant="secondary" className="w-full">Edit</Button>
                   </Link>
-                  <Button variant="danger" className="w-full">Delete</Button>
+                  <Button 
+                    variant="danger" 
+                    className="w-full"
+                    onClick={() => handleDelete(product.id)}
+                    disabled={deleting}
+                  >
+                    Delete
+                  </Button>
                 </div>
               </Card>
             ))}
+          </div>
+        )}
+
+        {/* Confirmation Modal */}
+        {showConfirm && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full animate-in fade-in zoom-in duration-200">
+              <h3 className="text-lg font-bold mb-2">Delete Product</h3>
+              <p className="text-gray-600 mb-6">Are you sure you want to delete this product? This action cannot be undone.</p>
+              <div className="flex justify-end gap-3">
+                <Button variant="secondary" onClick={() => { setShowConfirm(false); setDeleteId(null); }}>Cancel</Button>
+                <Button 
+                  variant="danger" 
+                  onClick={confirmDelete}
+                  disabled={deleting}
+                >
+                  {deleting ? 'Deleting...' : 'Delete'}
+                </Button>
+              </div>
+            </div>
           </div>
         )}
       </main>
