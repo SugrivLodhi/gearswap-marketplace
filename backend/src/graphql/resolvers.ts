@@ -1,8 +1,8 @@
-import { authResolvers } from '@modules/auth/auth.resolvers';
-import { productResolvers } from '@modules/product/product.resolvers';
-import { cartResolvers } from '@modules/cart/cart.resolvers';
-import { orderResolvers } from '@modules/order/order.resolvers';
-import { discountResolvers } from '@modules/discount/discount.resolvers';
+import { authResolvers } from '../modules/auth/auth.resolvers';
+import { productResolvers } from '../modules/product/product.resolvers';
+import { cartResolvers } from '../modules/cart/cart.resolvers';
+import { orderResolvers } from '../modules/order/order.resolvers';
+import { discountResolvers } from '../modules/discount/discount.resolvers';
 
 /**
  * Custom resolver for Variant attributes

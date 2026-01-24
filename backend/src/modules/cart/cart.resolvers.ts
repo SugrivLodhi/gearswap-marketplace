@@ -1,4 +1,4 @@
-import { GraphQLContext, requireBuyer } from '@middleware/auth.guard';
+import { GraphQLContext, requireBuyer } from '../../middleware/auth.guard';
 import {
     cartService,
     AddToCartInput,

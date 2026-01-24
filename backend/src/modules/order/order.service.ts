@@ -1,7 +1,7 @@
 import { Order, IOrder, OrderStatus, IOrderItem } from './order.model';
-import { cartService } from '@modules/cart/cart.service';
-import { productService } from '@modules/product/product.service';
-import { discountService } from '@modules/discount/discount.service';
+import { cartService } from '../cart/cart.service';
+import { productService } from '../product/product.service';
+import { discountService } from '../discount/discount.service';
 import mongoose from 'mongoose';
 
 class OrderService {

@@ -1,6 +1,6 @@
 import { Cart, ICart, ICartItem } from './cart.model';
-import { productService } from '@modules/product/product.service';
-import { discountService } from '@modules/discount/discount.service';
+import { productService } from '../product/product.service';
+import { discountService } from '../discount/discount.service';
 import mongoose from 'mongoose';
 
 export interface AddToCartInput {

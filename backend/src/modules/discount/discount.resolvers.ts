@@ -1,4 +1,4 @@
-import { GraphQLContext, requireSeller } from '@middleware/auth.guard';
+import { GraphQLContext, requireSeller } from '../../middleware/auth.guard';
 import {
     discountService,
     CreateDiscountInput,

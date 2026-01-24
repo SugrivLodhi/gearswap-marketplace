@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { User, UserRole, IUser } from './auth.model';
-import { env } from '@config/environment';
+import { env } from '../../config/environment';
 
 export interface RegisterInput {
     email: string;
@@ -109,7 +109,7 @@ class AuthService {
 
         return jwt.sign(payload, env.jwtSecret, {
             expiresIn: env.jwtExpiresIn,
-        });
+        } as jwt.SignOptions);
     }
 
     /**

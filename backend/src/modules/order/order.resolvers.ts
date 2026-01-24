@@ -3,10 +3,10 @@ import {
     requireBuyer,
     requireSeller,
     requireAuth,
-} from '@middleware/auth.guard';
+} from '../../middleware/auth.guard';
 import { orderService } from './order.service';
 import { OrderStatus } from './order.model';
-import { UserRole } from '@modules/auth/auth.model';
+import { UserRole } from '../auth/auth.model';
 
 export const orderResolvers = {
     Query: {

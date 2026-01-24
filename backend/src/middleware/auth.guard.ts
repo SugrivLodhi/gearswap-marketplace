@@ -1,6 +1,6 @@
 import { Request } from 'express';
-import { authService, TokenPayload } from '@modules/auth/auth.service';
-import { UserRole } from '@modules/auth/auth.model';
+import { authService, TokenPayload } from '../modules/auth/auth.service';
+import { UserRole } from '../modules/auth/auth.model';
 
 export interface GraphQLContext {
     user?: TokenPayload;
