@@ -192,6 +192,8 @@ Follow the instructions in [SEED_DATA.md](./SEED_DATA.md) to populate the databa
 
 - **BUYER**: Can browse products, manage cart, place orders
 - **SELLER**: Can create products, manage discounts, view orders
+-**INFO**: Add product by Seller ,add these domain only when adding image: 
+           domains: ['example.com', 'via.placeholder.com','images.unsplash.com'],
 
 ### Sample Credentials (after seeding)
 
