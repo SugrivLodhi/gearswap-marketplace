@@ -1,392 +1,166 @@
-# Design Decisions
+# Design Decisions & Architecture Analysis
 
-This document explains the architectural and technical decisions made during the development of the GearSwap multi-vendor marketplace.
-
-## 1. Architecture
-
-### Why GraphQL?
-
-**Decision**: Use GraphQL instead of REST for the API layer.
-
-**Rationale**:
-- **Precise Data Fetching**: Clients can request exactly the data they need, reducing over-fetching and under-fetching
-- **Type Safety**: GraphQL schema provides strong typing that integrates well with TypeScript on both backend and frontend
-- **Single Endpoint**: Simplifies API management and reduces the number of round trips
-- **Real-time Capabilities**: Built-in support for subscriptions (though not implemented in this MVP)
-- **Developer Experience**: GraphQL Playground provides excellent API exploration and documentation
-
-**Trade-offs**:
-- ❌ More complex caching compared to REST
-- ❌ Steeper learning curve for developers unfamiliar with GraphQL
-- ❌ Potential for expensive queries if not properly limited
-- ✅ Better suited for complex data relationships (products → variants → sellers)
-- ✅ Reduces frontend-backend coordination overhead
-
-### Module Boundaries
-
-**Decision**: Organize backend code into domain-driven modules (auth, product, cart, order, discount).
-
-**Rationale**:
-- **Separation of Concerns**: Each module owns its data model, business logic, and resolvers
-- **Scalability**: Modules can be extracted into microservices if needed
-- **Testability**: Business logic is isolated and easy to unit test
-- **Team Collaboration**: Different developers can work on different modules with minimal conflicts
-
-**Structure**:
-```
-modules/
-├── auth/          # User authentication & authorization
-├── product/       # Product catalog & variants
-├── cart/          # Shopping cart with pricing
-├── order/         # Order lifecycle management
-└── discount/      # Discount codes & validation
-```
-
-### App Router Structure (Next.js 14)
-
-**Decision**: Use Next.js 14 App Router with route groups for role-based pages.
-
-**Rationale**:
-- **Server Components by Default**: Better performance with less JavaScript shipped to client
-- **Route Groups**: Clean separation of public, buyer, and seller pages without affecting URLs
-- **Layouts**: Shared layouts reduce code duplication
-- **Type-Safe Routing**: Better TypeScript integration
-
-**Structure**:
-```
-app/
-├── (public)/      # Public pages (products, login, register)
-├── (buyer)/       # Buyer-only pages (cart, checkout, orders)
-└── (seller)/      # Seller-only pages (dashboard, products, discounts)
-```
+This document details the architectural choices, trade-offs, and implementations for the GearSwap marketplace, specifically addressing core distributed system challenges.
 
 ---
 
-## 2. Data Modeling
+## 2.1 The Concurrent Checkout Problem
 
-### Product Variant Strategy
+> **Scenario**: Two buyers checkout the last item simultaneously.
 
-**Decision**: Store variants as subdocuments within the product document.
+### 1. Approaches
+1.  **Pessimistic Locking**:
+    - Lock the database row/document when a user starts checkout.
+    - Prevents others from even reading/writing the stock until the transaction completes.
+2.  **Optimistic Locking (Versioning)**:
+    - Read stock with a version number (v1).
+    - When updating, condition the write on `version == v1`.
+    - If version changed (v2), the update fails and the operation is retried.
+3.  **Atomic Database Operations (Compare-and-Swap)**:
+    - Use database-native atomic operators to decrement stock *only if* it meets criteria.
+    - MongoDB: `update({ _id: variantId, stock: { $gte: quantity } }, { $inc: { stock: -quantity } })`.
 
-**Rationale**:
-- **Atomic Operations**: Variants are always accessed with their parent product
-- **Consistency**: No orphaned variants if product is deleted
-- **Performance**: Single query to fetch product with all variants
-- **Business Logic**: Variants don't exist independently of products
+### 2. Trade-offs
+*   **Pessimistic**: High Consistency ✅, High Complexity ❌, Poor User Experience (locking/waiting) ❌.
+*   **Optimistic**: High Consistency ✅, Medium Complexity ⚠️, Good UX (fast reads, fail on write) ✅.
+*   **Atomic**: High Consistency ✅, Low Complexity ✅, Best UX (instant feedback) ✅.
 
-**Alternative Considered**: Separate `Variant` collection with foreign key to `Product`.
-- ❌ Rejected because it requires joins and doesn't match the business domain
-- ❌ Variants never exist without a product
-- ✅ Subdocuments provide better data locality
+### 3. What Did You Implement?
+**Approach**: **Read-Modify-Write (Vulnerable)**.
 
-**Schema**:
+**Details**:
+In `order.service.ts` / `product.service.ts`:
+1.  `checkout()` reads the product variant to check `stock < quantity` (Read).
+2.  If valid, it creates the `Order` document.
+3.  Then it calls `updateVariantStock()` which performs a simple update (`variant.stock = newStock`).
+
+**Why**: For this MVP, I prioritized minimizing complexity and leveraging Mongoose's abstraction. I acknowledged the race condition risk where two users could pass step 1 simultaneously before step 3 completes, resulting in overselling (negative stock potential if not strictly validated at DB level).
+
+### 4. Flash Sale Strategy (10,000 users)
+If scaling for a flash sale, I would:
+1.  **Use Redis**: Move inventory counters to Redis for ultra-fast atomic decrements (`DECRBY`).
+2.  **Message Queue**: Decouple checkout from order processing. User clicks "Buy" -> Request enters Queue -> Workers process queue sequentially/batched -> Result pushed to client via WebSocket.
+3.  **Database Constraint**: Enforce `stock >= 0` constraint at the database schema level as a final safety net.
+
+---
+
+## 2.2 The Discount Stacking Dilemma
+
+> **Scenario**: 20% OFF + ₹500 OFF on a ₹10,000 item.
+
+### 1. Stacking Implementation
+**Decision**: Discounts generally **should not stack** in a simple marketplace to protect seller margins, unless explicitly configured.
+*   **Business Implication**: Stacking requires complex margin protection logic. Unintentional stacking (e.g., 50% off + 50% off) can lead to 100% loss.
+
+### 2. Application Order (If Stacked)
+Math matters:
+*   **Option A (% then Fixed)**: `(10,000 * 0.80) - 500` = 8,000 - 500 = **₹7,500**.
+*   **Option B (Fixed then %)**: `(10,000 - 500) * 0.80` = 9,500 * 0.80 = **₹7,600**.
+
+**Recommendation**: Apply **Percentage First**, then Fixed. This maximizes the discount for the user (Option A), generally increasing conversion. However, sellers strictly prefer "Fixed First" if they want to preserve revenue.
+
+### 3. What Did You Implement?
+**Approach**: **Single Discount Only (Last-Write-Wins)**.
+
+**Details**:
+*   `cart.service.ts` logic allows only one `discountId` on the Cart model.
+*   Calling `applyDiscount` overrides any previous discount.
+*   **Configuration for Flexibility**: To support stacking, I would change `discountId` (single) to `appliedDiscounts` (array) and add a `stackable: boolean` flag to the `Discount` schema.
+
+### 4. Handling Negative Prices
+I implemented a floor function in `cart.service.ts`:
+```typescript
+const total = Math.max(0, subtotal - discountAmount);
+```
+This ensures that even if a discount (e.g., ₹500 OFF on a ₹300 item) exceeds the price, the total never drops below zero.
+
+---
+
+## 2.3 The Price Snapshot Problem
+
+> **Scenario**: Added to cart at ₹50,000. Price checkout at ₹55,000.
+
+### 1. Which Price to Pay?
+The buyer should pay the **Current Price (₹55,000)**.
+*   **Business**: Prices fluctuate based on supply/demand. Honoring old prices creates vulnerability to arbitrage (users holding items in cart indefinitely).
+*   **Technical**: Storing price in cart requires invalidation logic (complex) whenever the catalog updates.
+
+### 2. What Did You Implement?
+**Approach**: **Dynamic Pricing (Fresh Fetch)**.
+
+**Details**:
+*   In `cart.service.ts` (`getCartWithPricing`), I iterate through cart items and fetch the *current* variant data (`price`) from the `products` collection fresh on every read.
+*   The `Card` references only `productId` and `variantId`, not the price.
+*   This ensures the checkout total always matches the live catalog price.
+
+### 3. Communication
+Currently, the update is silent (suboptimal). A better UX would be:
+*   Compare 'last seen price' vs 'current price'.
+*   If different, display a Toast/Alert: *"Items in your cart have changed price."*
+*   Require user re-confirmation before valid checkout.
+
+### 4. Decreased Price
+Behavior is symmetric: user pays the lower current price. This is a "delightful surprise" for the user and requires no warning, though highlighting it ("Price dropped!") drives conversion.
+
+---
+
+## 2.4 Data Modeling Trade-off
+
+> **Scenario**: Storing order history while products change.
+
+### 1. Trade-offs
+*   **References (Foreign Keys)**:
+    *   *Storage*: Low.
+    *   *Accuracy*: **Poor**. If product price changes to ₹55k, order history shows ₹55k for a past ₹50k purchase.
+*   **Snapshots**:
+    *   *Storage*: High (duplication).
+    *   *Accuracy*: **Perfect**. Preserves order state exactly as it occurred.
+*   **Hybrid**: Link + Snapshot.
+
+### 2. What Did You Implement?
+**Approach**: **Hybrid / Snapshotting**.
+
+**Details**:
+In `Order` schema:
 ```typescript
 {
-  _id: ObjectId,
-  name: string,
-  variants: [
-    {
-      _id: ObjectId,
-      sku: string,
-      price: number,
-      stock: number,
-      attributes: { size: "M", color: "Blue" }
-    }
-  ]
+  productId: Ref('Product'), // Link for navigation
+  productName: String,       // Snapshot
+  price: Number,             // Snapshot (Price at purchase)
+  variantSku: String         // Snapshot
 }
 ```
+**Why**: Accounting requires immutable history. An invoice generated today for a purchase last year must show the original price, not today's price.
 
-### Cart vs Order Snapshot Decision
-
-**Decision**: Cart stores references; Orders store complete snapshots.
-
-**Rationale**:
-
-**Cart** (References):
-- Stores only `productId` and `variantId`
-- Pricing is **always calculated dynamically**
-- Ensures buyers see current prices and stock
-- Prevents stale pricing data
-
-**Order** (Snapshots):
-- Stores complete item details (name, price, SKU)
-- Captures pricing at time of purchase
-- Historical accuracy for accounting and disputes
-- Immutable record of what was purchased
-
-**Why This Matters**:
-- If a seller changes a product price, active carts reflect the new price
-- Past orders show the price that was actually paid
-- Discount codes are stored by code (string) in orders, not by reference
-
-**Example**:
-```typescript
-// Cart Item (Reference)
-{
-  productId: "abc123",
-  variantId: "xyz789",
-  quantity: 2
-  // Price fetched dynamically from Product
-}
-
-// Order Item (Snapshot)
-{
-  productId: "abc123",
-  productName: "Gaming Mouse",
-  variantId: "xyz789",
-  variantSku: "GM-001-BLK",
-  price: 49.99,        // Price at time of purchase
-  quantity: 2,
-  subtotal: 99.98
-}
-```
-
-### Discount Rule Modeling
-
-**Decision**: Use a flexible rule-based system with multiple validation criteria.
-
-**Rationale**:
-- **Expiry Date**: Time-limited promotions
-- **Minimum Cart Value**: Encourage higher order values
-- **Usage Limits**: Control discount budget
-- **Product Targeting**: Seller-specific or product-specific discounts
-- **Type (Percentage/Flat)**: Different discount strategies
-
-**Validation Flow**:
-1. Check if discount code exists
-2. Verify discount is active
-3. Check expiry date
-4. Verify usage limit not exceeded
-5. Validate minimum cart value
-6. Calculate discount amount
-7. Apply to cart
-
-**Trade-offs**:
-- ✅ Flexible enough for most promotion strategies
-- ✅ Easy to extend with new rules
-- ❌ No support for "buy X get Y" or tiered discounts (intentional simplification)
-- ❌ No automatic discount application (user must enter code)
+### 3. Effects
+*   **Storage**: Increased (duplicating strings/numbers for every order), but acceptable given storage costs.
+*   **Query Complexity**: **Reduced**. We don't need to `$lookup` (populate) the `Products` collection just to render an Invoice or Order History list.
+*   **Accuracy**: High. 100% faithful to the transaction moment.
 
 ---
 
-## 3. Security
+## 2.5 Your Schema Justification
 
-### JWT Handling
+### MongoDB Schema Design
 
-**Decision**: Use JWT tokens stored in localStorage with Bearer authentication.
+**Core Collections**: `Users`, `Products`, `Orders`, `Carts`, `Discounts`.
 
-**Implementation**:
-- Backend generates JWT on login/register
-- Frontend stores token in localStorage
-- Apollo Client injects token in Authorization header
-- Backend verifies token and injects user into GraphQL context
+### 1. Indexing Strategy
+I created specific compound indexes for query patterns:
+*   `Order`: `{ buyerId: 1, createdAt: -1 }` -> Optimizes "My Orders" page (filtering by user, sorting by date).
+*   `Product`: `{ name: 'text', description: 'text' }` -> Enables the search bar functionality.
+*   `Product`: `{ sellerId: 1 }` -> Optimizes the Seller Dashboard "My Products" list.
+*   `Discount`: `{ code: 1 }` (Unique) -> Fast lookup during checkout validation.
 
-**Security Considerations**:
-- ✅ Stateless authentication (no session storage needed)
-- ✅ Token includes user ID and role for authorization
-- ❌ Vulnerable to XSS attacks (localStorage accessible to JavaScript)
-- ❌ No refresh token mechanism (tokens expire after 7 days)
+### 2. Denormalization
+*   **Variants in Product**: Embeds variants array inside Product.
+    *   *Why*: Variants (Size/Color) are never queried independently of the main product. This avoids finding a Product then strictly querying a separate Variants collection.
+*   **Order Items**: Embeds full item array in Order.
+    *   *Why*: Orders are read-heavy and write-once. Embedding avoids complex joins for the most common access pattern (viewing an order).
 
-**Production Improvements**:
-- Use httpOnly cookies instead of localStorage
-- Implement refresh token rotation
-- Add CSRF protection
-- Implement rate limiting on auth endpoints
-
-### Role-Based Access Control (RBAC)
-
-**Decision**: Enforce authorization at the resolver level using guard functions.
-
-**Implementation**:
-```typescript
-// Guard functions
-requireAuth(context)    // Any authenticated user
-requireBuyer(context)   // Buyer role only
-requireSeller(context)  // Seller role only
-
-// Usage in resolver
-async addToCart(_, { input }, context) {
-  const user = requireBuyer(context);  // Throws if not buyer
-  return cartService.addToCart(user.userId, input);
-}
-```
-
-**Why Resolver-Level**:
-- ✅ Centralized authorization logic
-- ✅ Clear error messages
-- ✅ Easy to audit and test
-- ❌ Requires discipline to apply guards consistently
-
-**Alternative Considered**: Middleware-based authorization
-- ❌ Rejected because GraphQL doesn't have a middleware chain like Express
-- ❌ Would require custom directives or field-level authorization
-
-### API Abuse Prevention
-
-**Current Implementation**:
-- Input validation on all mutations
-- Stock validation prevents over-purchasing
-- Discount usage limits prevent abuse
-
-**Production Improvements**:
-- Rate limiting (e.g., 100 requests/minute per IP)
-- Query complexity analysis (prevent expensive nested queries)
-- Pagination limits (max 100 items per page)
-- CAPTCHA on registration/login
-- Email verification for new accounts
-
----
-
-## 4. Performance
-
-### Pagination Strategy
-
-**Decision**: Use cursor-based pagination instead of offset-based.
-
-**Rationale**:
-- **Consistency**: Results don't skip or duplicate when data changes
-- **Performance**: Cursors use indexed fields (_id), avoiding slow OFFSET queries
-- **Scalability**: Works well with large datasets
-
-**Implementation**:
-```graphql
-products(pagination: { cursor: "abc123", limit: 20 }) {
-  edges {
-    node { ...product }
-    cursor
-  }
-  pageInfo {
-    hasNextPage
-    endCursor
-  }
-}
-```
-
-**Trade-offs**:
-- ✅ Better performance at scale
-- ✅ Consistent results
-- ❌ Can't jump to arbitrary page numbers
-- ❌ More complex frontend logic
-
-### GraphQL Query Shaping
-
-**Decision**: Design queries to match UI needs exactly.
-
-**Examples**:
-- Product listing: Only fetch fields needed for cards (no full descriptions)
-- Cart: Include calculated pricing in response (no separate query needed)
-- Orders: Include item snapshots inline (no need to fetch products)
-
-**Benefits**:
-- Reduces payload size
-- Minimizes database queries
-- Improves perceived performance
-
-### Indexing Decisions
-
-**MongoDB Indexes Created**:
-
-**Users**:
-- `email` (unique) - Fast login lookups
-
-**Products**:
-- `sellerId` + `isDeleted` - Seller's product list
-- `category` + `isDeleted` - Category filtering
-- Text index on `name` + `description` - Search functionality
-
-**Orders**:
-- `buyerId` + `createdAt` - Buyer order history
-- `items.sellerId` + `createdAt` - Seller order filtering
-
-**Carts**:
-- `buyerId` (unique) - One cart per buyer
-
-**Discounts**:
-- `code` (unique) - Fast discount lookup
-- `sellerId` + `isActive` - Seller's discount list
-
-**Why These Indexes**:
-- Cover most common query patterns
-- Balance between read performance and write overhead
-- Compound indexes support multiple query types
-
----
-
-## 5. Trade-offs
-
-### What Was Intentionally Simplified
-
-**No Payment Integration**:
-- **Why**: Focus on system design, not payment gateway integration
-- **Impact**: Order status transitions are manual
-- **Production**: Integrate Stripe/PayPal with webhooks
-
-**No Image Upload**:
-- **Why**: Avoid file storage complexity
-- **Impact**: Products use image URLs only
-- **Production**: Use AWS S3 or Cloudinary with signed uploads
-
-**No Real-time Notifications**:
-- **Why**: Subscriptions add complexity
-- **Impact**: Users must refresh to see updates
-- **Production**: Implement GraphQL subscriptions or WebSockets
-
-**No Email Verification**:
-- **Why**: Simplify registration flow
-- **Impact**: Anyone can create accounts
-- **Production**: Send verification emails with tokens
-
-**Basic Search**:
-- **Why**: MongoDB text search is sufficient for MVP
-- **Impact**: No fuzzy matching or advanced filters
-- **Production**: Use Elasticsearch or Algolia
-
-### What Would Be Refactored at Scale
-
-**1. Separate Read/Write Models (CQRS)**:
-- Current: Same models for reads and writes
-- At Scale: Separate optimized read models (denormalized)
-- Benefit: Better query performance, easier caching
-
-**2. Event Sourcing for Orders**:
-- Current: Direct state updates
-- At Scale: Event log (OrderCreated, OrderPaid, OrderShipped)
-- Benefit: Full audit trail, easier to replay/debug
-
-**3. Microservices Architecture**:
-- Current: Monolithic backend
-- At Scale: Separate services (Auth, Catalog, Orders, Payments)
-- Benefit: Independent scaling, team autonomy
-
-**4. Caching Layer**:
-- Current: No caching (except Apollo Client)
-- At Scale: Redis for session data, product catalog
-- Benefit: Reduced database load, faster responses
-
-**5. Background Jobs**:
-- Current: Synchronous operations
-- At Scale: Queue system (Bull/BullMQ) for emails, notifications
-- Benefit: Better user experience, fault tolerance
-
-**6. Database Sharding**:
-- Current: Single MongoDB instance
-- At Scale: Shard by seller ID or geographic region
-- Benefit: Horizontal scalability
-
-**7. CDN for Static Assets**:
-- Current: Next.js serves everything
-- At Scale: CloudFront/Cloudflare for images, CSS, JS
-- Benefit: Global performance, reduced server load
-
----
-
-## Conclusion
-
-This marketplace demonstrates production-ready patterns while acknowledging intentional simplifications. The architecture is designed to be:
-
-- **Maintainable**: Clear module boundaries and separation of concerns
-- **Testable**: Business logic isolated from framework code
-- **Scalable**: Cursor-based pagination, proper indexing, stateless auth
-- **Secure**: Role-based access control, input validation, JWT authentication
-
-The trade-offs made prioritize **clarity and explainability** over feature completeness, making this codebase an excellent foundation for learning and extension.
+### 3. Slow Queries & Mitigation
+*   **Slowing Down**: `GET_PRODUCTS` with multiple complex filters (Category + Price Range + Text Search) simultaneously. MongoDB might verify text matches then filter, which can be slow on millions of docs.
+*   **At Scale**:
+    1.  Offload text search to **Elasticsearch** (specialized search engine).
+    2.  Use **Redis** to cache common product listing pages (e.g., "Trending Guitars").
+    3.  Implement **Facet Search** caching strategy.
