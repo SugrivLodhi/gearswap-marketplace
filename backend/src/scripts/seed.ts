@@ -91,12 +91,14 @@ async function seed() {
 
         await Product.create({
             name: 'Ibanez Gio GRX70QA',
-            description: 'Top beginner electric guitar in India. Great for learning rock and metal.',
+            description: 'Top beginner electric guitar in India. Great for learning rock and metal. (Intra-state Tax Example)',
             category: 'Electric Guitars',
             imageUrl: 'https://images.unsplash.com/photo-1550985543-f4423c8d361e?w=800',
             sellerId: seller1._id,
             hsnCode: '92071000', // Musical instruments (string instruments)
             gstRate: 18,
+            sgstRate: 9, // Split SGST
+            cgstRate: 9, // Split CGST
             variants: [
                 {
                     sku: 'GRX70-TRB',

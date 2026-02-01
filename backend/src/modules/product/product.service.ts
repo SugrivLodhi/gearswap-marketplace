@@ -14,7 +14,10 @@ export interface CreateProductInput {
     category: string;
     imageUrl: string;
     hsnCode: string; // GST: HSN Code
-    gstRate: number; // GST: Tax Rate
+    gstRate: number; // GST: Tax Rate (Total/IGST)
+    sgstRate: number; // State GST
+    cgstRate: number; // Central GST
+    igstRate: number; // Integrated GST
     variants: VariantInput[];
 }
 
@@ -25,6 +28,9 @@ export interface UpdateProductInput {
     imageUrl?: string;
     hsnCode?: string;
     gstRate?: number;
+    sgstRate?: number;
+    cgstRate?: number;
+    igstRate?: number;
     variants?: VariantInput[];
 }
 
@@ -76,7 +82,7 @@ class ProductService {
         sellerId: string,
         input: CreateProductInput
     ): Promise<IProduct> {
-        const { name, description, category, imageUrl, hsnCode, gstRate, variants } = input;
+        const { name, description, category, imageUrl, hsnCode, gstRate, sgstRate, cgstRate, igstRate, variants } = input;
 
         // Validate variants
         if (!variants || variants.length === 0) {
@@ -98,7 +104,10 @@ class ProductService {
             category,
             imageUrl,
             hsnCode,
-            gstRate,
+            gstRate: gstRate || igstRate || 0, // Fallback logic
+            sgstRate: sgstRate || 0,
+            cgstRate: cgstRate || 0,
+            igstRate: igstRate || gstRate || 0,
             sellerId: new mongoose.Types.ObjectId(sellerId),
             variants: transformedVariants,
         });
@@ -131,6 +140,10 @@ class ProductService {
         if (input.imageUrl) product.imageUrl = input.imageUrl;
         if (input.hsnCode) product.hsnCode = input.hsnCode;
         if (input.gstRate !== undefined) product.gstRate = input.gstRate;
+        if (input.sgstRate !== undefined) product.sgstRate = input.sgstRate;
+        if (input.cgstRate !== undefined) product.cgstRate = input.cgstRate;
+        if (input.igstRate !== undefined) product.igstRate = input.igstRate;
+
 
         if (input.variants) {
             // Validate variants

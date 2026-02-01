@@ -21,6 +21,13 @@ export interface IOrderItem {
     gstRate: number;
     taxableAmount: number; // GST-exclusive amount (price × quantity)
     gstAmount: number; // Calculated GST for this item
+    // Detailed Breakdown
+    sgstRate: number;
+    cgstRate: number;
+    igstRate: number;
+    sgstAmount: number;
+    cgstAmount: number;
+    igstAmount: number;
     totalAmount: number; // Final amount including GST
 }
 
@@ -35,6 +42,9 @@ export interface IOrder extends Document {
     // GST breakdown fields
     taxableSubtotal: number; // Sum of all item taxableAmounts
     totalGst: number; // Sum of all item gstAmounts
+    totalSgst: number;
+    totalCgst: number;
+    totalIgst: number;
     grandTotal: number; // Final payable amount (taxableSubtotal - discount + totalGst)
     createdAt: Date;
     updatedAt: Date;
@@ -100,6 +110,13 @@ const orderItemSchema = new Schema<IOrderItem>(
             required: true,
             min: 0,
         },
+        // Detailed GST Breakdown
+        sgstRate: { type: Number, default: 0 },
+        cgstRate: { type: Number, default: 0 },
+        igstRate: { type: Number, default: 0 },
+        sgstAmount: { type: Number, default: 0 },
+        cgstAmount: { type: Number, default: 0 },
+        igstAmount: { type: Number, default: 0 },
         totalAmount: {
             type: Number,
             required: true,
@@ -111,6 +128,7 @@ const orderItemSchema = new Schema<IOrderItem>(
 
 const orderSchema = new Schema<IOrder>(
     {
+        // ... (existing fields)
         buyerId: {
             type: Schema.Types.ObjectId,
             ref: 'User',
@@ -160,6 +178,9 @@ const orderSchema = new Schema<IOrder>(
             required: true,
             min: 0,
         },
+        totalSgst: { type: Number, default: 0 },
+        totalCgst: { type: Number, default: 0 },
+        totalIgst: { type: Number, default: 0 },
         grandTotal: {
             type: Number,
             required: true,

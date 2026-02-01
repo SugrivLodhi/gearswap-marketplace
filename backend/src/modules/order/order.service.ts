@@ -20,6 +20,9 @@ class OrderService {
         const orderItems: IOrderItem[] = [];
         let taxableSubtotal = 0;
         let totalGst = 0;
+        let totalSgst = 0;
+        let totalCgst = 0;
+        let totalIgst = 0;
 
         for (const item of cartData.items) {
             // Get fresh product data with HSN and GST rate
@@ -43,12 +46,37 @@ class OrderService {
 
             // Calculate GST for this item
             const taxableAmount = item.price * item.quantity;
-            const gstAmount = parseFloat(((taxableAmount * variantData.product.gstRate) / 100).toFixed(2));
+
+            // Get rates (defaults to 0 if not set)
+            const sgstRate = variantData.product.sgstRate || 0;
+            const cgstRate = variantData.product.cgstRate || 0;
+            let igstRate = variantData.product.igstRate || 0;
+
+            // Logic: If SGST or CGST is applicable (set > 0), we assume Intra-state transaction
+            // and ignore IGST to avoid double taxation (interpreting product config).
+            // This handles the case where CreateProduct sets both IGST and SGST/CGST.
+            if (sgstRate > 0 || cgstRate > 0) {
+                igstRate = 0;
+            }
+
+            const gstRate = (sgstRate + cgstRate + igstRate);
+
+            // Calculate amounts
+            const sgstAmount = parseFloat(((taxableAmount * sgstRate) / 100).toFixed(2));
+            const cgstAmount = parseFloat(((taxableAmount * cgstRate) / 100).toFixed(2));
+            const igstAmount = parseFloat(((taxableAmount * igstRate) / 100).toFixed(2));
+
+            // Total GST for this item
+            const gstAmount = parseFloat((sgstAmount + cgstAmount + igstAmount).toFixed(2));
+
             const totalAmount = taxableAmount + gstAmount;
 
             // Accumulate totals
             taxableSubtotal += taxableAmount;
             totalGst += gstAmount;
+            totalSgst += sgstAmount;
+            totalCgst += cgstAmount;
+            totalIgst += igstAmount;
 
             // Prepare order item with GST snapshot
             orderItems.push({
@@ -62,9 +90,15 @@ class OrderService {
                 subtotal: item.subtotal, // Deprecated field for backward compatibility
                 // GST fields (snapshotted at order time)
                 hsnCode: variantData.product.hsnCode,
-                gstRate: variantData.product.gstRate,
+                gstRate,
+                sgstRate,
+                cgstRate,
+                igstRate,
                 taxableAmount,
                 gstAmount,
+                sgstAmount,
+                cgstAmount,
+                igstAmount,
                 totalAmount,
             });
         }
@@ -72,6 +106,9 @@ class OrderService {
         // Round totals to 2 decimal places
         taxableSubtotal = parseFloat(taxableSubtotal.toFixed(2));
         totalGst = parseFloat(totalGst.toFixed(2));
+        totalSgst = parseFloat(totalSgst.toFixed(2));
+        totalCgst = parseFloat(totalCgst.toFixed(2));
+        totalIgst = parseFloat(totalIgst.toFixed(2));
 
         // Get discount code if applied
         let discountCode: string | undefined;
@@ -102,6 +139,9 @@ class OrderService {
             // GST breakdown fields
             taxableSubtotal,
             totalGst,
+            totalSgst,
+            totalCgst,
+            totalIgst,
             grandTotal,
         });
 
