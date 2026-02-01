@@ -103,7 +103,7 @@ export default function SellerOrdersPage() {
                         <th className="pb-2">Product</th>
                         <th className="pb-2">SKU</th>
                         <th className="pb-2">HSN Code</th>
-                        <th className="pb-2 text-right">GST %</th>
+                        <th className="pb-2 text-right">Tax Breakdown</th>
                         <th className="pb-2 text-right">Qty</th>
                         <th className="pb-2 text-right">Price</th>
                         <th className="pb-2 text-right">Taxable Amt</th>
@@ -117,11 +117,30 @@ export default function SellerOrdersPage() {
                           <td className="py-2 text-sm text-gray-900">{item.productName}</td>
                           <td className="py-2 text-sm text-gray-500">{item.variantSku}</td>
                           <td className="py-2 text-sm text-gray-600 font-mono">{item.hsnCode}</td>
-                          <td className="py-2 text-sm text-gray-900 text-right">{item.gstRate}%</td>
+                          <td className="py-2 text-xs text-right whitespace-pre-line text-gray-600">
+                             {item.sgstAmount > 0 ? (
+                               <>
+                                 <div>SGST ({item.sgstRate}%)</div>
+                                 <div>CGST ({item.cgstRate}%)</div>
+                                 <div className="text-gray-400 text-[10px] scale-90 origin-right">(Split Intra-state)</div>
+                               </>
+                             ) : (
+                               <div>IGST ({item.igstRate || item.gstRate}%)</div>
+                             )}
+                          </td>
                           <td className="py-2 text-sm text-gray-900 text-right">{item.quantity}</td>
                           <td className="py-2 text-sm text-gray-900 text-right">{formatPrice(item.price)}</td>
                           <td className="py-2 text-sm text-gray-900 text-right">{formatPrice(item.taxableAmount)}</td>
-                          <td className="py-2 text-sm text-green-600 text-right">{formatPrice(item.gstAmount)}</td>
+                          <td className="py-2 text-sm text-green-600 text-right">
+                             {item.sgstAmount > 0 ? (
+                               <>
+                                 <div>{formatPrice(item.sgstAmount)}</div>
+                                 <div>{formatPrice(item.cgstAmount)}</div>
+                               </>
+                             ) : (
+                               formatPrice(item.gstAmount)
+                             )}
+                          </td>
                           <td className="py-2 text-sm text-gray-900 text-right font-medium">{formatPrice(item.totalAmount)}</td>
                         </tr>
                       ))}
@@ -143,6 +162,37 @@ export default function SellerOrdersPage() {
                           <td colSpan={2}></td>
                         </tr>
                       )}
+                      
+                      {/* Detailed Tax Totals */}
+                      {order.totalSgst > 0 && (
+                       <>
+                        <tr>
+                          <td colSpan={6} className="pt-1 text-right text-sm font-medium text-gray-700">Total SGST:</td>
+                          <td className="pt-1 text-right text-sm font-semibold text-gray-600">
+                            {formatPrice(order.totalSgst)}
+                          </td>
+                          <td colSpan={2}></td>
+                        </tr>
+                        <tr>
+                          <td colSpan={6} className="pt-1 text-right text-sm font-medium text-gray-700">Total CGST:</td>
+                          <td className="pt-1 text-right text-sm font-semibold text-gray-600">
+                            {formatPrice(order.totalCgst)}
+                          </td>
+                          <td colSpan={2}></td>
+                        </tr>
+                       </>
+                      )}
+                      
+                      {order.totalIgst > 0 && (
+                        <tr>
+                          <td colSpan={6} className="pt-1 text-right text-sm font-medium text-gray-700">Total IGST:</td>
+                          <td className="pt-1 text-right text-sm font-semibold text-gray-600">
+                            {formatPrice(order.totalIgst)}
+                          </td>
+                          <td colSpan={2}></td>
+                        </tr>
+                      )}
+
                       <tr>
                         <td colSpan={6} className="pt-1 text-right text-sm font-medium text-gray-700">Total GST:</td>
                         <td colSpan={2} className="pt-1 text-right text-sm font-semibold text-green-600">

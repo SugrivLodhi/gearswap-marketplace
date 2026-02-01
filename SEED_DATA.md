@@ -216,16 +216,25 @@ await paymentIntegrationService.verifyAndCompletePayment(
       "productName": "Yamaha F310 Acoustic Guitar",
       "hsnCode": "92071000",
       "gstRate": 18,
+      "sgstRate": 9,
+      "cgstRate": 9,
+      "igstRate": 0,
       "price": 10500,
       "quantity": 1,
       "taxableAmount": 10500,
       "gstAmount": 1890,
+      "sgstAmount": 945,
+      "cgstAmount": 945,
+      "igstAmount": 0,
       "totalAmount": 12390
     }
   ],
   "taxableSubtotal": 10500,
   "discount": 0,
   "totalGst": 1890,
+  "totalSgst": 945,
+  "totalCgst": 945,
+  "totalIgst": 0,
   "grandTotal": 12390,
   "status": "PENDING"
 }

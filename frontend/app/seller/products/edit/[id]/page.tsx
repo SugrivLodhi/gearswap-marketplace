@@ -21,6 +21,8 @@ export default function EditProductPage() {
     imageUrl: '',
     hsnCode: '',
     gstRate: '18',
+    sgstRate: '',
+    cgstRate: '',
   });
 
   const [variants, setVariants] = useState([
@@ -44,13 +46,11 @@ export default function EditProductPage() {
           imageUrl: data.product.imageUrl,
           hsnCode: data.product.hsnCode || '',
           gstRate: data.product.gstRate?.toString() || '18',
+          sgstRate: data.product.sgstRate?.toString() || '',
+          cgstRate: data.product.cgstRate?.toString() || '',
         });
 
         if (data.product.variants && data.product.variants.length > 0) {
-          // Map existing variants to state
-          // For MVP simple form, we might just take the first one or map all
-          // But our form UI only really handles one nicely or a list in a simple way
-          // Let's map all but focus on editing them.
           const mappedVariants = data.product.variants.map((v: any) => {
              const colorAttr = v.attributes.find((a: any) => a.key === 'color');
              return {
@@ -103,6 +103,8 @@ export default function EditProductPage() {
           input: {
             ...formData,
             gstRate: parseFloat(formData.gstRate),
+            sgstRate: formData.sgstRate ? parseFloat(formData.sgstRate) : 0,
+            cgstRate: formData.cgstRate ? parseFloat(formData.cgstRate) : 0,
             variants: variants.map(v => ({
               sku: v.sku,
               price: parseFloat(v.price),
@@ -121,13 +123,6 @@ export default function EditProductPage() {
 
   if (fetching) return <div className="text-center py-20">Loading...</div>;
 
-  // We'll use the first variant for the main form inputs as per the Create page design
-  // but if there are multiple, we might want to allow editing them?
-  // For now, let's just render the first one's inputs bound to variants[0] to match Create page behavior
-  // properly. If we want to support multiple, we'd iterate.
-  // The Create page logic I wrote supports state for array but UI only shows single set of inputs bound to currentVariant (variants[0]).
-  // Use map to support multiple if present, or just first.
-  
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -224,7 +219,7 @@ export default function EditProductPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    GST Rate (%) <span className="text-red-500">*</span>
+                    Total GST Rate (%) <span className="text-red-500">*</span>
                   </label>
                   <select
                     name="gstRate"
@@ -242,6 +237,37 @@ export default function EditProductPage() {
                     <option value="28">28%</option>
                   </select>
                   <p className="text-xs text-gray-500 mt-1">Applicable GST rate</p>
+                </div>
+
+                <div className="col-span-1 md:col-span-2 grid grid-cols-2 gap-6 p-4 bg-gray-50 rounded-md border border-gray-200">
+                   <div className="col-span-2 text-sm font-semibold text-gray-700">GST Breakdown (Optional - For Intra-state Split)</div>
+                   <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">SGST Rate (%)</label>
+                      <input
+                        type="number"
+                        name="sgstRate"
+                        value={formData.sgstRate}
+                        onChange={handleChange}
+                        className="input"
+                        placeholder="e.g. 9"
+                        min="0"
+                        step="0.01"
+                      />
+                   </div>
+                   <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">CGST Rate (%)</label>
+                      <input
+                        type="number"
+                        name="cgstRate"
+                        value={formData.cgstRate}
+                        onChange={handleChange}
+                        className="input"
+                        placeholder="e.g. 9"
+                        min="0"
+                        step="0.01"
+                      />
+                   </div>
+                   <p className="col-span-2 text-xs text-gray-500">Leaving these 0 means the system will default to IGST (Total Rate). Set these explicitly for state split.</p>
                 </div>
               </div>
             </div>

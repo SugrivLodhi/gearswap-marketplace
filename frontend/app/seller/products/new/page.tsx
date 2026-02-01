@@ -22,6 +22,8 @@ export default function CreateProductPage() {
     imageUrl: '',
     hsnCode: '',
     gstRate: '18',
+    sgstRate: '',
+    cgstRate: '',
   });
 
   // For simplicity, we'll manage a single variant for now, but structured as an array
@@ -63,6 +65,8 @@ export default function CreateProductPage() {
           input: {
             ...formData,
             gstRate: parseFloat(formData.gstRate),
+            sgstRate: formData.sgstRate ? parseFloat(formData.sgstRate) : 0,
+            cgstRate: formData.cgstRate ? parseFloat(formData.cgstRate) : 0,
             variants: variants.map(v => ({
               sku: v.sku,
               price: parseFloat(v.price),
@@ -200,7 +204,7 @@ export default function CreateProductPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    GST Rate (%) <span className="text-red-500">*</span>
+                    Total GST / IGST Rate (%) <span className="text-red-500">*</span>
                   </label>
                   <select
                     name="gstRate"
@@ -217,7 +221,38 @@ export default function CreateProductPage() {
                     <option value="18">18% - Most Musical Instruments</option>
                     <option value="28">28%</option>
                   </select>
-                  <p className="text-xs text-gray-500 mt-1">Select applicable GST rate based on HSN code</p>
+                  <p className="text-xs text-gray-500 mt-1">Select applicable GST rate (IGST)</p>
+                </div>
+
+                <div className="col-span-1 md:col-span-2 grid grid-cols-2 gap-6 p-4 bg-gray-50 rounded-md border border-gray-200">
+                   <div className="col-span-2 text-sm font-semibold text-gray-700">GST Breakdown (Optional - For Intra-state Split)</div>
+                   <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">SGST Rate (%)</label>
+                      <input
+                        type="number"
+                        name="sgstRate"
+                        value={formData.sgstRate}
+                        onChange={handleChange}
+                        className="input"
+                        placeholder="e.g. 9"
+                        min="0"
+                        step="0.01"
+                      />
+                   </div>
+                   <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">CGST Rate (%)</label>
+                      <input
+                        type="number"
+                        name="cgstRate"
+                        value={formData.cgstRate}
+                        onChange={handleChange}
+                        className="input"
+                        placeholder="e.g. 9"
+                        min="0"
+                        step="0.01"
+                      />
+                   </div>
+                   <p className="col-span-2 text-xs text-gray-500">Leaving these 0 means the system will default to IGST (Total Rate). Set these explicitly to split the tax.</p>
                 </div>
               </div>
             </div>

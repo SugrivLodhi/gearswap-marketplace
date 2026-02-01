@@ -67,6 +67,11 @@ export const GET_PRODUCT = gql`
       description
       category
       imageUrl
+      hsnCode
+      gstRate
+      sgstRate
+      cgstRate
+      igstRate
       seller {
         id
         email
@@ -214,8 +219,14 @@ export const CHECKOUT = gql`
         subtotal
         hsnCode
         gstRate
+        sgstRate
+        cgstRate
+        igstRate
         taxableAmount
         gstAmount
+        sgstAmount
+        cgstAmount
+        igstAmount
         totalAmount
       }
       subtotal
@@ -223,6 +234,9 @@ export const CHECKOUT = gql`
       total
       taxableSubtotal
       totalGst
+      totalSgst
+      totalCgst
+      totalIgst
       grandTotal
       createdAt
     }
@@ -242,8 +256,14 @@ export const GET_MY_ORDERS = gql`
         subtotal
         hsnCode
         gstRate
+        sgstRate
+        cgstRate
+        igstRate
         taxableAmount
         gstAmount
+        sgstAmount
+        cgstAmount
+        igstAmount
         totalAmount
       }
       subtotal
@@ -251,6 +271,9 @@ export const GET_MY_ORDERS = gql`
       total
       taxableSubtotal
       totalGst
+      totalSgst
+      totalCgst
+      totalIgst
       grandTotal
       discountCode
       createdAt
@@ -267,6 +290,11 @@ export const CREATE_PRODUCT = gql`
       description
       category
       imageUrl
+      hsnCode
+      gstRate
+      sgstRate
+      cgstRate
+      igstRate
       variants {
         id
         sku
@@ -289,6 +317,11 @@ export const UPDATE_PRODUCT = gql`
       description
       category
       imageUrl
+      hsnCode
+      gstRate
+      sgstRate
+      cgstRate
+      igstRate
       variants {
         id
         sku
@@ -323,8 +356,14 @@ export const GET_SELLER_ORDERS = gql`
         subtotal
         hsnCode
         gstRate
+        sgstRate
+        cgstRate
+        igstRate
         taxableAmount
         gstAmount
+        sgstAmount
+        cgstAmount
+        igstAmount
         totalAmount
       }
       subtotal
@@ -332,6 +371,9 @@ export const GET_SELLER_ORDERS = gql`
       total
       taxableSubtotal
       totalGst
+      totalSgst
+      totalCgst
+      totalIgst
       grandTotal
       discountCode
       createdAt
