@@ -77,10 +77,14 @@ export default function CartPage() {
   const handleCheckout = async () => {
     try {
       await checkout();
-      toast.success('Order placed successfully! 🎵');
+      toast.success('Order placed! GST Invoice generated. 🎵');
       router.push('/buyer/orders');
     } catch (err: any) {
-      toast.error(err.message);
+      if (err.message.includes('not found') || err.message.includes('stock')) {
+        toast.error('Cart contains unavailable items. Please clear cart and try again.');
+      } else {
+        toast.error(err.message);
+      }
     }
   };
 

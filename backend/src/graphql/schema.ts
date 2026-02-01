@@ -52,6 +52,8 @@ export const typeDefs = gql`
     category: String!
     imageUrl: String!
     seller: User!
+    hsnCode: String!
+    gstRate: Float!
     variants: [Variant!]!
     createdAt: String!
     updatedAt: String!
@@ -98,6 +100,11 @@ export const typeDefs = gql`
     price: Float!
     quantity: Int!
     subtotal: Float!
+    hsnCode: String!
+    gstRate: Float!
+    taxableAmount: Float!
+    gstAmount: Float!
+    totalAmount: Float!
   }
 
   type Order {
@@ -108,6 +115,9 @@ export const typeDefs = gql`
     subtotal: Float!
     discount: Float!
     total: Float!
+    taxableSubtotal: Float!
+    totalGst: Float!
+    grandTotal: Float!
     discountCode: String
     createdAt: String!
     updatedAt: String!
@@ -170,6 +180,8 @@ export const typeDefs = gql`
     description: String!
     category: String!
     imageUrl: String!
+    hsnCode: String!
+    gstRate: Float!
     variants: [VariantInput!]!
   }
 
@@ -178,6 +190,8 @@ export const typeDefs = gql`
     description: String
     category: String
     imageUrl: String
+    hsnCode: String
+    gstRate: Float
     variants: [VariantInput!]
   }
 

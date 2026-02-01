@@ -13,19 +13,29 @@ export interface IOrderItem {
     sellerId: mongoose.Types.ObjectId;
     variantId: mongoose.Types.ObjectId;
     variantSku: string;
-    price: number;
+    price: number; // GST-exclusive price per unit
     quantity: number;
-    subtotal: number;
+    subtotal: number; // Deprecated: use taxableAmount
+    // GST fields (snapshotted at order time)
+    hsnCode: string;
+    gstRate: number;
+    taxableAmount: number; // GST-exclusive amount (price × quantity)
+    gstAmount: number; // Calculated GST for this item
+    totalAmount: number; // Final amount including GST
 }
 
 export interface IOrder extends Document {
     buyerId: mongoose.Types.ObjectId;
     items: IOrderItem[];
     status: OrderStatus;
-    subtotal: number;
+    subtotal: number; // Deprecated: use taxableSubtotal
     discount: number;
-    total: number;
+    total: number; // Deprecated: use grandTotal
     discountCode?: string;
+    // GST breakdown fields
+    taxableSubtotal: number; // Sum of all item taxableAmounts
+    totalGst: number; // Sum of all item gstAmounts
+    grandTotal: number; // Final payable amount (taxableSubtotal - discount + totalGst)
     createdAt: Date;
     updatedAt: Date;
 }
@@ -66,6 +76,31 @@ const orderItemSchema = new Schema<IOrderItem>(
             min: 1,
         },
         subtotal: {
+            type: Number,
+            required: true,
+            min: 0,
+        },
+        // GST fields (snapshotted at order time)
+        hsnCode: {
+            type: String,
+            required: true,
+        },
+        gstRate: {
+            type: Number,
+            required: true,
+            min: 0,
+        },
+        taxableAmount: {
+            type: Number,
+            required: true,
+            min: 0,
+        },
+        gstAmount: {
+            type: Number,
+            required: true,
+            min: 0,
+        },
+        totalAmount: {
             type: Number,
             required: true,
             min: 0,
@@ -113,6 +148,22 @@ const orderSchema = new Schema<IOrder>(
         },
         discountCode: {
             type: String,
+        },
+        // GST breakdown fields
+        taxableSubtotal: {
+            type: Number,
+            required: true,
+            min: 0,
+        },
+        totalGst: {
+            type: Number,
+            required: true,
+            min: 0,
+        },
+        grandTotal: {
+            type: Number,
+            required: true,
+            min: 0,
         },
     },
     {

@@ -77,6 +77,8 @@ async function seed() {
             category: 'Electric Guitars',
             imageUrl: 'https://images.unsplash.com/photo-1564186763535-ebb21ef5277f?w=800',
             sellerId: seller1._id,
+            hsnCode: '92071000', // Musical instruments (string instruments)
+            gstRate: 18, // 18% GST on musical instruments
             variants: [
                 {
                     sku: 'STRAT-001',
@@ -93,6 +95,8 @@ async function seed() {
             category: 'Electric Guitars',
             imageUrl: 'https://images.unsplash.com/photo-1550985543-f4423c8d361e?w=800',
             sellerId: seller1._id,
+            hsnCode: '92071000', // Musical instruments (string instruments)
+            gstRate: 18,
             variants: [
                 {
                     sku: 'GRX70-TRB',
@@ -110,6 +114,8 @@ async function seed() {
             category: 'Acoustic Guitars',
             imageUrl: 'https://images.unsplash.com/photo-1525201548942-d8732f6617a0?w=800',
             sellerId: seller1._id,
+            hsnCode: '92071000', // Musical instruments (string instruments)
+            gstRate: 18,
             variants: [
                 {
                     sku: 'F310-NAT',
@@ -126,6 +132,8 @@ async function seed() {
             category: 'Acoustic Guitars',
             imageUrl: 'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=800',
             sellerId: seller1._id,
+            hsnCode: '92071000', // Musical instruments (string instruments)
+            gstRate: 18,
             variants: [
                 {
                     sku: 'TAYLOR-214',
@@ -143,6 +151,8 @@ async function seed() {
             category: 'Bass Guitars',
             imageUrl: 'https://images.unsplash.com/photo-1556449895-a33c9dba33dd?w=800',
             sellerId: seller1._id,
+            hsnCode: '92071000', // Musical instruments (string instruments)
+            gstRate: 18,
             variants: [
                 {
                     sku: 'PBASS-PLr',
@@ -159,6 +169,8 @@ async function seed() {
             category: 'Bass Guitars',
             imageUrl: 'https://images.unsplash.com/photo-1510915228340-29c85a43dcfe?w=800',
             sellerId: seller1._id,
+            hsnCode: '92071000', // Musical instruments (string instruments)
+            gstRate: 18,
             variants: [
                 {
                     sku: 'SR300E-IPT',
@@ -176,6 +188,8 @@ async function seed() {
             category: 'Keyboards & Synthesizers',
             imageUrl: 'https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?w=800',
             sellerId: seller2._id,
+            hsnCode: '92079000', // Musical instruments (keyboard instruments)
+            gstRate: 18,
             variants: [
                 {
                     sku: 'PSRE473',
@@ -192,6 +206,8 @@ async function seed() {
             category: 'Keyboards & Synthesizers',
             imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800',
             sellerId: seller2._id,
+            hsnCode: '92079000', // Musical instruments (keyboard instruments)
+            gstRate: 18,
             variants: [
                 {
                     sku: 'KRONOS2-88',
@@ -209,6 +225,8 @@ async function seed() {
             category: 'Drums & Percussion',
             imageUrl: 'https://images.unsplash.com/photo-1519892300165-cb5542fb47c7?w=800',
             sellerId: seller3._id,
+            hsnCode: '92069000', // Musical instruments (percussion instruments)
+            gstRate: 18,
             variants: [
                 {
                     sku: 'TORNADO-BLK',
@@ -225,6 +243,8 @@ async function seed() {
             category: 'Drums & Percussion',
             imageUrl: 'https://images.unsplash.com/photo-1571327073757-71d13c24de30?w=800',
             sellerId: seller3._id,
+            hsnCode: '92069000', // Musical instruments (percussion instruments)
+            gstRate: 18,
             variants: [
                 {
                     sku: 'TD07KV',
@@ -242,6 +262,8 @@ async function seed() {
             category: 'Wind Instruments',
             imageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800',
             sellerId: seller4._id,
+            hsnCode: '92051000', // Musical instruments (brass wind instruments)
+            gstRate: 18,
             variants: [
                 {
                     sku: 'YAS280',
@@ -258,6 +280,8 @@ async function seed() {
             category: 'Wind Instruments',
             imageUrl: 'https://images.unsplash.com/photo-1465821185615-20b3c2fbf41b?w=800',
             sellerId: seller4._id,
+            hsnCode: '92059000', // Musical instruments (wind instruments, other)
+            gstRate: 12, // Lower GST rate for smaller instruments
             variants: [
                 {
                     sku: 'HOHNER-C',
@@ -275,6 +299,8 @@ async function seed() {
             category: 'Audio Equipment',
             imageUrl: 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=800',
             sellerId: seller4._id,
+            hsnCode: '85181000', // Microphones and stands
+            gstRate: 18,
             variants: [
                 {
                     sku: 'SM58-LC',
@@ -291,6 +317,8 @@ async function seed() {
             category: 'Audio Equipment',
             imageUrl: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=800',
             sellerId: seller4._id,
+            hsnCode: '85198990', // Audio equipment (sound recording/reproducing apparatus)
+            gstRate: 18,
             variants: [
                 {
                     sku: 'SCARLETT-2I2',
@@ -308,6 +336,8 @@ async function seed() {
             category: 'Amplifiers',
             imageUrl: 'https://images.unsplash.com/photo-1614963366795-e9a73e5af4c5?w=800',
             sellerId: seller1._id,
+            hsnCode: '85182200', // Audio amplifiers
+            gstRate: 18,
             variants: [
                 {
                     sku: 'MG15G',
@@ -324,6 +354,8 @@ async function seed() {
             category: 'Amplifiers',
             imageUrl: 'https://images.unsplash.com/photo-1550985543-f4423c8d361e?w=800',
             sellerId: seller1._id,
+            hsnCode: '85182200', // Audio amplifiers
+            gstRate: 18,
             variants: [
                 {
                     sku: 'FLY3',

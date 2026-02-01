@@ -96,15 +96,19 @@ export default function SellerOrdersPage() {
                   </div>
                 </div>
 
-                <div className="bg-gray-50 rounded-lg p-4">
+                <div className="bg-gray-50 rounded-lg p-4 overflow-x-auto">
                   <table className="min-w-full">
                     <thead>
                       <tr className="text-left text-xs text-gray-500 uppercase">
                         <th className="pb-2">Product</th>
                         <th className="pb-2">SKU</th>
+                        <th className="pb-2">HSN Code</th>
+                        <th className="pb-2 text-right">GST %</th>
                         <th className="pb-2 text-right">Qty</th>
                         <th className="pb-2 text-right">Price</th>
-                        <th className="pb-2 text-right">Amount</th>
+                        <th className="pb-2 text-right">Taxable Amt</th>
+                        <th className="pb-2 text-right">GST Amt</th>
+                        <th className="pb-2 text-right">Total</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
@@ -112,22 +116,65 @@ export default function SellerOrdersPage() {
                         <tr key={idx}>
                           <td className="py-2 text-sm text-gray-900">{item.productName}</td>
                           <td className="py-2 text-sm text-gray-500">{item.variantSku}</td>
+                          <td className="py-2 text-sm text-gray-600 font-mono">{item.hsnCode}</td>
+                          <td className="py-2 text-sm text-gray-900 text-right">{item.gstRate}%</td>
                           <td className="py-2 text-sm text-gray-900 text-right">{item.quantity}</td>
                           <td className="py-2 text-sm text-gray-900 text-right">{formatPrice(item.price)}</td>
-                          <td className="py-2 text-sm text-gray-900 text-right font-medium">{formatPrice(item.subtotal)}</td>
+                          <td className="py-2 text-sm text-gray-900 text-right">{formatPrice(item.taxableAmount)}</td>
+                          <td className="py-2 text-sm text-green-600 text-right">{formatPrice(item.gstAmount)}</td>
+                          <td className="py-2 text-sm text-gray-900 text-right font-medium">{formatPrice(item.totalAmount)}</td>
                         </tr>
                       ))}
                     </tbody>
                     <tfoot>
-                      <tr className="border-t border-gray-200">
-                        <td colSpan={4} className="pt-3 text-right text-sm font-medium text-gray-900">Total Revenue:</td>
-                        <td className="pt-3 text-right text-lg font-bold text-primary-600">
-                          {/* Calculate total just for this seller's items in the order */}
-                          {formatPrice(order.items.reduce((sum: number, item: any) => sum + item.subtotal, 0))}
+                      <tr className="border-t-2 border-gray-300">
+                        <td colSpan={6} className="pt-3 text-right text-sm font-medium text-gray-700">Taxable Subtotal:</td>
+                        <td className="pt-3 text-right text-sm font-semibold text-gray-900">
+                          {formatPrice(order.items.reduce((sum: number, item: any) => sum + item.taxableAmount, 0))}
                         </td>
+                        <td colSpan={2}></td>
+                      </tr>
+                      {order.discount > 0 && (
+                        <tr>
+                          <td colSpan={6} className="pt-1 text-right text-sm font-medium text-gray-700">Discount:</td>
+                          <td className="pt-1 text-right text-sm font-semibold text-red-600">
+                            - {formatPrice(order.discount)}
+                          </td>
+                          <td colSpan={2}></td>
+                        </tr>
+                      )}
+                      <tr>
+                        <td colSpan={6} className="pt-1 text-right text-sm font-medium text-gray-700">Total GST:</td>
+                        <td colSpan={2} className="pt-1 text-right text-sm font-semibold text-green-600">
+                          + {formatPrice(order.items.reduce((sum: number, item: any) => sum + item.gstAmount, 0))}
+                        </td>
+                        <td></td>
+                      </tr>
+                      <tr className="border-t-2 border-gray-300">
+                        <td colSpan={6} className="pt-3 text-right text-base font-bold text-gray-900">Grand Total (Payable):</td>
+                        <td colSpan={2} className="pt-3 text-right text-lg font-bold text-primary-600">
+                          {formatPrice(order.items.reduce((sum: number, item: any) => sum + item.totalAmount, 0) - order.discount)}
+                        </td>
+                        <td></td>
                       </tr>
                     </tfoot>
                   </table>
+
+                  {/* GST Summary Card */}
+                  <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                    <div className="flex items-start gap-2">
+                      <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div className="flex-1">
+                        <p className="text-xs font-semibold text-blue-900 mb-1">GST Invoice Ready</p>
+                        <p className="text-xs text-blue-700">
+                          All items include HSN codes and GST breakdown for tax compliance. 
+                          {order.discountCode && <span className="font-medium"> Discount code: {order.discountCode}</span>}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </Card>
             ))}

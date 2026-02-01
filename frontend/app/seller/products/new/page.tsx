@@ -20,6 +20,8 @@ export default function CreateProductPage() {
     description: '',
     category: 'Electric Guitars',
     imageUrl: '',
+    hsnCode: '',
+    gstRate: '18',
   });
 
   // For simplicity, we'll manage a single variant for now, but structured as an array
@@ -60,6 +62,7 @@ export default function CreateProductPage() {
         variables: {
           input: {
             ...formData,
+            gstRate: parseFloat(formData.gstRate),
             variants: variants.map(v => ({
               sku: v.sku,
               price: parseFloat(v.price),
@@ -148,6 +151,73 @@ export default function CreateProductPage() {
                     className="input"
                     required
                   />
+                </div>
+              </div>
+            </div>
+
+            {/* GST Information */}
+            <div className="space-y-4 pt-4">
+              <h2 className="text-xl font-semibold border-b pb-2">GST Information</h2>
+              
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-4">
+                <div className="flex items-start gap-2">
+                  <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div className="flex-1">
+                    <p className="text-xs font-semibold text-blue-900 mb-1">Common HSN Codes for Musical Instruments</p>
+                    <ul className="text-xs text-blue-700 space-y-0.5">
+                      <li>• <strong>92071000</strong> - String instruments (Guitars, Bass, Violins) - 18% GST</li>
+                      <li>• <strong>92079000</strong> - Keyboard instruments (Pianos, Keyboards) - 18% GST</li>
+                      <li>• <strong>92069000</strong> - Percussion instruments (Drums, Cymbals) - 18% GST</li>
+                      <li>• <strong>92051000</strong> - Brass wind instruments (Saxophones, Trumpets) - 18% GST</li>
+                      <li>• <strong>92059000</strong> - Other wind instruments (Harmonicas) - 12% GST</li>
+                      <li>• <strong>85181000</strong> - Microphones - 18% GST</li>
+                      <li>• <strong>85182200</strong> - Audio amplifiers - 18% GST</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    HSN Code <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="hsnCode"
+                    value={formData.hsnCode}
+                    onChange={handleChange}
+                    placeholder="e.g. 92071000"
+                    className="input font-mono"
+                    pattern="[0-9]{4,8}"
+                    title="HSN code must be 4, 6, or 8 digits"
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Enter 4, 6, or 8 digit HSN code for tax classification</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    GST Rate (%) <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    name="gstRate"
+                    value={formData.gstRate}
+                    onChange={handleChange}
+                    className="input"
+                    required
+                  >
+                    <option value="0">0% - Exempt</option>
+                    <option value="0.25">0.25%</option>
+                    <option value="3">3%</option>
+                    <option value="5">5%</option>
+                    <option value="12">12%</option>
+                    <option value="18">18% - Most Musical Instruments</option>
+                    <option value="28">28%</option>
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">Select applicable GST rate based on HSN code</p>
                 </div>
               </div>
             </div>

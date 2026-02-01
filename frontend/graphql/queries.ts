@@ -212,10 +212,18 @@ export const CHECKOUT = gql`
         price
         quantity
         subtotal
+        hsnCode
+        gstRate
+        taxableAmount
+        gstAmount
+        totalAmount
       }
       subtotal
       discount
       total
+      taxableSubtotal
+      totalGst
+      grandTotal
       createdAt
     }
   }
@@ -232,10 +240,18 @@ export const GET_MY_ORDERS = gql`
         price
         quantity
         subtotal
+        hsnCode
+        gstRate
+        taxableAmount
+        gstAmount
+        totalAmount
       }
       subtotal
       discount
       total
+      taxableSubtotal
+      totalGst
+      grandTotal
       discountCode
       createdAt
     }
@@ -305,9 +321,19 @@ export const GET_SELLER_ORDERS = gql`
         price
         quantity
         subtotal
+        hsnCode
+        gstRate
+        taxableAmount
+        gstAmount
+        totalAmount
       }
       subtotal
+      discount
       total
+      taxableSubtotal
+      totalGst
+      grandTotal
+      discountCode
       createdAt
     }
   }

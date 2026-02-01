@@ -16,11 +16,13 @@ class OrderService {
             throw new Error('Cart is empty');
         }
 
-        // Validate stock and prepare order items
+        // Validate stock and prepare order items with GST calculation
         const orderItems: IOrderItem[] = [];
+        let taxableSubtotal = 0;
+        let totalGst = 0;
 
         for (const item of cartData.items) {
-            // Get fresh product data
+            // Get fresh product data with HSN and GST rate
             const variantData = await productService.getVariantBySku(
                 item.productId,
                 item.variantId
@@ -39,7 +41,16 @@ class OrderService {
                 );
             }
 
-            // Prepare order item with snapshot
+            // Calculate GST for this item
+            const taxableAmount = item.price * item.quantity;
+            const gstAmount = parseFloat(((taxableAmount * variantData.product.gstRate) / 100).toFixed(2));
+            const totalAmount = taxableAmount + gstAmount;
+
+            // Accumulate totals
+            taxableSubtotal += taxableAmount;
+            totalGst += gstAmount;
+
+            // Prepare order item with GST snapshot
             orderItems.push({
                 productId: new mongoose.Types.ObjectId(item.productId),
                 productName: item.productName,
@@ -48,12 +59,24 @@ class OrderService {
                 variantSku: item.variantSku,
                 price: item.price,
                 quantity: item.quantity,
-                subtotal: item.subtotal,
+                subtotal: item.subtotal, // Deprecated field for backward compatibility
+                // GST fields (snapshotted at order time)
+                hsnCode: variantData.product.hsnCode,
+                gstRate: variantData.product.gstRate,
+                taxableAmount,
+                gstAmount,
+                totalAmount,
             });
         }
 
+        // Round totals to 2 decimal places
+        taxableSubtotal = parseFloat(taxableSubtotal.toFixed(2));
+        totalGst = parseFloat(totalGst.toFixed(2));
+
         // Get discount code if applied
         let discountCode: string | undefined;
+        let discountAmount = cartData.discount;
+
         if (cartData.cart.discountId) {
             const discount = await discountService.getDiscountById(
                 cartData.cart.discountId.toString()
@@ -63,15 +86,23 @@ class OrderService {
             }
         }
 
-        // Create order
+        // Calculate grand total (taxable subtotal - discount + GST)
+        // Note: Discount is applied to taxable amount, then GST is calculated
+        const grandTotal = parseFloat((taxableSubtotal - discountAmount + totalGst).toFixed(2));
+
+        // Create order with GST breakdown
         const order = await Order.create({
             buyerId: new mongoose.Types.ObjectId(buyerId),
             items: orderItems,
             status: OrderStatus.PENDING,
-            subtotal: cartData.subtotal,
-            discount: cartData.discount,
-            total: cartData.total,
+            subtotal: cartData.subtotal, // Deprecated field for backward compatibility
+            discount: discountAmount,
+            total: cartData.total, // Deprecated field for backward compatibility
             discountCode,
+            // GST breakdown fields
+            taxableSubtotal,
+            totalGst,
+            grandTotal,
         });
 
         // Deduct stock for each item

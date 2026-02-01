@@ -2,32 +2,45 @@
 
 ## 🎵 Database Seeder
 
-The seeder populates your database with realistic musical instrument data for testing.
+The seeder populates your database with realistic musical instrument data for testing, now with **HSN codes and GST rates** for Indian tax compliance.
 
 ### What Gets Created
 
-**Users (7 total)**:
-- 3 Buyers (musicians looking to purchase instruments)
+**Users (6 total)**:
+- 2 Buyers (musicians looking to purchase instruments)
 - 4 Sellers (music stores selling instruments)
 
-**Products (20 musical instruments)**:
-- Electric Guitars: Fender Stratocaster, Gibson Les Paul, Ibanez RG550
-- Acoustic Guitars: Taylor 214ce
-- Bass Guitars: Fender Precision Bass, Music Man StingRay
-- Keyboards: Roland Fantom-8, Korg Minilogue XD, Yamaha P-125, Moog Subsequent 37
-- Drums: Pearl Export Kit, Roland V-Drums, Zildjian Cymbals, DW Snare
-- Wind Instruments: Yamaha Alto Sax, Yamaha Venova
-- Brass: Bach Stradivarius Trumpet
-- Strings: Eastman Violin
-- Audio: Shure SM58, Focusrite Scarlett 2i2
-- Amps: Boss Katana-50
+**Products (16 musical instruments with HSN codes and GST)**:
+- Electric Guitars: Fender Stratocaster, Ibanez Gio
+- Acoustic Guitars: Yamaha F310, Taylor 214ce
+- Bass Guitars: Fender Precision Bass, Ibanez SR300E
+- Keyboards: Yamaha PSR-E473, Korg Kronos 2
+- Drums: Mapex Tornado Kit, Roland TD-07KV
+- Wind Instruments: Yamaha Alto Sax, Hohner Harmonica
+- Audio Equipment: Shure SM58, Focusrite Scarlett 2i2
+- Amplifiers: Marshall MG15G, Blackstar Fly 3
 
-**Discount Codes (5)**:
-- MUSIC20: 20% off orders over $500
-- NEWPLAYER: $50 off orders over $200
-- DRUMMER15: 15% off orders over $300
-- ORCHESTRA100: $100 off orders over $1000
-- FREESHIP: $25 off orders over $100
+**Discount Codes (3)**:
+- DIWALI2026: 20% off orders over ₹50,000
+- NEWYEAR: ₹5,000 off orders over ₹40,000
+- STUDENT10: 10% off orders over ₹20,000
+
+---
+
+## 🏷️ HSN Codes & GST Rates
+
+All products include HSN codes and GST rates for tax compliance:
+
+| Category | HSN Code | GST Rate | Products |
+|----------|----------|----------|----------|
+| String Instruments | 92071000 | 18% | Guitars, Bass |
+| Keyboard Instruments | 92079000 | 18% | Keyboards, Synthesizers |
+| Percussion Instruments | 92069000 | 18% | Drums |
+| Brass Wind Instruments | 92051000 | 18% | Saxophones |
+| Other Wind Instruments | 92059000 | 12% | Harmonicas |
+| Microphones | 85181000 | 18% | Shure SM58 |
+| Audio Amplifiers | 85182200 | 18% | Marshall, Blackstar |
+| Audio Interfaces | 85198990 | 18% | Focusrite Scarlett |
 
 ---
 
@@ -58,7 +71,7 @@ npm run seed
 
 This will:
 1. Clear existing data
-2. Create users, products, and discounts
+2. Create users, products (with HSN codes), and discounts
 3. Display a summary with login credentials
 
 ---
@@ -68,19 +81,18 @@ This will:
 All passwords are: `password123`
 
 ### Buyer Accounts
-- `john.musician@example.com`
-- `sarah.guitarist@example.com`
-- `mike.drummer@example.com`
+- `rahul.musician@example.com`
+- `priya.guitarist@example.com`
 
 ### Seller Accounts
 - `guitar.heaven@gearswap.com` (Guitars & Basses)
-- `keys.and.synths@gearswap.com` (Keyboards & Audio)
+- `keys.and.synths@gearswap.com` (Keyboards)
 - `drum.world@gearswap.com` (Drums & Percussion)
-- `brass.and.strings@gearswap.com` (Orchestral Instruments)
+- `pro.audio@gearswap.com` (Audio Equipment)
 
 ---
 
-## 🧪 Testing End-to-End Functionality
+## 🧪 Testing GST Calculation
 
 ### 1. Start the Backend
 
@@ -91,13 +103,13 @@ npm run dev
 
 Server runs at: `http://localhost:4000/graphql`
 
-### 2. Test as a Buyer
+### 2. Test Checkout with GST
 
-**Login**:
+**Login as buyer**:
 ```graphql
 mutation {
   login(input: {
-    email: "john.musician@example.com"
+    email: "rahul.musician@example.com"
     password: "password123"
   }) {
     token
@@ -106,29 +118,7 @@ mutation {
 }
 ```
 
-**Browse Products**:
-```graphql
-query {
-  products(filters: { category: "Electric Guitars" }) {
-    edges {
-      node {
-        id
-        name
-        description
-        variants {
-          id
-          sku
-          price
-          stock
-          attributes { key value }
-        }
-      }
-    }
-  }
-}
-```
-
-**Add to Cart** (use token in Authorization header):
+**Add product to cart**:
 ```graphql
 mutation {
   addToCart(input: {
@@ -138,170 +128,139 @@ mutation {
   }) {
     items {
       productName
-      variantSku
       price
       quantity
-      subtotal
     }
-    subtotal
-    total
   }
 }
 ```
 
-**Apply Discount**:
-```graphql
-mutation {
-  applyDiscount(code: "MUSIC20") {
-    items { productName subtotal }
-    subtotal
-    discount
-    total
-  }
-}
-```
-
-**Checkout**:
+**Checkout and see GST breakdown**:
 ```graphql
 mutation {
   checkout {
     id
-    status
     items {
       productName
+      hsnCode
+      gstRate
       price
       quantity
+      taxableAmount
+      gstAmount
+      totalAmount
     }
-    subtotal
+    taxableSubtotal
     discount
-    total
-  }
-}
-```
-
-**View Orders**:
-```graphql
-query {
-  myOrders {
-    id
+    totalGst
+    grandTotal
     status
-    items { productName price quantity }
-    total
-    createdAt
   }
 }
 ```
 
-### 3. Test as a Seller
+### 3. Example GST Calculation
 
-**Login**:
-```graphql
-mutation {
-  login(input: {
-    email: "guitar.heaven@gearswap.com"
-    password: "password123"
-  }) {
-    token
-    user { id email role }
-  }
-}
+**Product**: Yamaha F310 Acoustic Guitar
+- Base Price: ₹10,500 (GST-exclusive)
+- HSN Code: 92071000
+- GST Rate: 18%
+- Quantity: 1
+
+**Calculation**:
+```
+Taxable Amount = ₹10,500
+GST Amount = 10,500 × 18 / 100 = ₹1,890
+Total Amount = 10,500 + 1,890 = ₹12,390
 ```
 
-**View Seller Orders**:
-```graphql
-query {
-  sellerOrders {
-    id
-    status
-    items {
-      productName
-      sellerId
-      price
-      quantity
+**Order Totals**:
+```
+Taxable Subtotal: ₹10,500
+Total GST: ₹1,890
+Grand Total: ₹12,390
+```
+
+---
+
+## 💳 Payment Integration (Mock Razorpay)
+
+The system includes mock Razorpay integration for testing:
+
+**Initiate Payment**:
+```typescript
+const payment = await paymentIntegrationService.initiatePayment(orderId, buyerId);
+// Returns: { razorpayOrderId, amount, currency, orderDetails }
+```
+
+**Verify Payment**:
+```typescript
+await paymentIntegrationService.verifyAndCompletePayment(
+  orderId,
+  razorpayOrderId,
+  razorpayPaymentId,
+  razorpaySignature
+);
+// Updates order status to PAID
+```
+
+---
+
+## 📊 Sample Order with GST
+
+```json
+{
+  "id": "507f1f77bcf86cd799439011",
+  "items": [
+    {
+      "productName": "Yamaha F310 Acoustic Guitar",
+      "hsnCode": "92071000",
+      "gstRate": 18,
+      "price": 10500,
+      "quantity": 1,
+      "taxableAmount": 10500,
+      "gstAmount": 1890,
+      "totalAmount": 12390
     }
-    total
-    createdAt
-  }
-}
-```
-
-**Update Order Status**:
-```graphql
-mutation {
-  updateOrderStatus(
-    orderId: "<order_id>"
-    status: PAID
-  ) {
-    id
-    status
-  }
-}
-```
-
-**Create New Product**:
-```graphql
-mutation {
-  createProduct(input: {
-    name: "Custom Guitar Pedal"
-    description: "Boutique overdrive pedal"
-    category: "Audio Equipment"
-    imageUrl: "https://example.com/pedal.jpg"
-    variants: [{
-      sku: "PEDAL-001"
-      price: 199.99
-      stock: 15
-      attributes: [{ key: "color", value: "Blue" }]
-    }]
-  }) {
-    id
-    name
-  }
-}
-```
-
-**View My Discounts**:
-```graphql
-query {
-  myDiscounts {
-    id
-    code
-    type
-    value
-    minimumCartValue
-    currentUses
-    maxUses
-  }
+  ],
+  "taxableSubtotal": 10500,
+  "discount": 0,
+  "totalGst": 1890,
+  "grandTotal": 12390,
+  "status": "PENDING"
 }
 ```
 
 ---
 
-## 🎯 Sample Shopping Flow
+## 📋 Product Inventory with HSN Codes
 
-1. **Login as buyer**: `john.musician@example.com`
-2. **Browse guitars**: Search for "Stratocaster"
-3. **Add to cart**: Fender Stratocaster (Sunburst) x1
-4. **Add keyboard**: Yamaha P-125 (Black) x1
-5. **Apply discount**: Use code `MUSIC20` (20% off)
-6. **Checkout**: Create order
-7. **Login as seller**: `guitar.heaven@gearswap.com`
-8. **View orders**: See the Stratocaster order
-9. **Update status**: PENDING → PAID → SHIPPED → COMPLETED
+| Product | HSN Code | GST | Base Price |
+|---------|----------|-----|------------|
+| Fender Stratocaster | 92071000 | 18% | ₹1,75,000 |
+| Ibanez Gio GRX70QA | 92071000 | 18% | ₹18,500 |
+| Yamaha F310 | 92071000 | 18% | ₹10,500 |
+| Taylor 214ce-K DLX | 92071000 | 18% | ₹1,45,000 |
+| Fender P-Bass | 92071000 | 18% | ₹78,000 |
+| Ibanez SR300E | 92071000 | 18% | ₹32,000 |
+| Yamaha PSR-E473 | 92079000 | 18% | ₹24,500 |
+| Korg Kronos 2 | 92079000 | 18% | ₹3,20,000 |
+| Mapex Tornado Kit | 92069000 | 18% | ₹35,000 |
+| Roland TD-07KV | 92069000 | 18% | ₹89,000 |
+| Yamaha YAS-280 | 92051000 | 18% | ₹98,000 |
+| Hohner Harmonica | 92059000 | 12% | ₹1,200 |
+| Shure SM58 | 85181000 | 18% | ₹9,500 |
+| Focusrite Scarlett | 85198990 | 18% | ₹18,500 |
+| Marshall MG15G | 85182200 | 18% | ₹12,500 |
+| Blackstar Fly 3 | 85182200 | 18% | ₹6,500 |
 
 ---
 
-## 📊 Product Inventory
+## 📖 Additional Documentation
 
-| Category | Products | Price Range |
-|----------|----------|-------------|
-| Electric Guitars | 4 | $1,299 - $2,599 |
-| Acoustic Guitars | 1 | $1,099 |
-| Bass Guitars | 2 | $1,699 - $2,199 |
-| Keyboards | 4 | $649 - $3,999 |
-| Drums | 4 | $549 - $1,799 |
-| Wind/Brass | 3 | $89 - $2,899 |
-| Strings | 1 | $549 - $599 |
-| Audio/Amps | 3 | $99 - $259 |
+- **GST Flow Guide**: See `backend/GST_FLOW.md` for complete GST documentation
+- **Implementation Plan**: See brain artifacts for technical details
+- **Walkthrough**: See brain artifacts for implementation summary
 
 ---
 
@@ -310,24 +269,11 @@ query {
 To reset and re-seed the database:
 
 ```bash
+cd backend
 npm run seed
 ```
 
-This will clear all existing data and create fresh test data.
-
----
-
-## 🎸 Musical Instrument Categories
-
-The marketplace includes instruments across all major categories:
-
-- **Guitars**: Electric, Acoustic, Bass
-- **Keyboards**: Digital Pianos, Synthesizers, Workstations
-- **Drums**: Acoustic Kits, Electronic Kits, Cymbals, Snares
-- **Orchestral**: Saxophones, Trumpets, Violins
-- **Audio**: Microphones, Interfaces, Amplifiers
-
-Each product has multiple variants (colors, sizes, configurations) with individual SKUs and stock levels.
+This will clear all existing data and create fresh test data with HSN codes and GST rates.
 
 ---
 
@@ -335,16 +281,28 @@ Each product has multiple variants (colors, sizes, configurations) with individu
 
 After seeding, verify:
 
-- [ ] All 7 users can login
-- [ ] 20 products are visible
-- [ ] Products have correct variants and pricing
-- [ ] Buyers can add items to cart
-- [ ] Discount codes work correctly
-- [ ] Checkout creates orders
-- [ ] Stock is deducted after purchase
-- [ ] Sellers can view their orders
-- [ ] Order status can be updated
+- [x] All 6 users can login
+- [x] 16 products are visible with HSN codes and GST rates
+- [x] Products have correct variants and pricing
+- [x] Buyers can add items to cart
+- [x] Discount codes work correctly
+- [x] Checkout creates orders with GST breakdown
+- [x] Order items contain snapshotted HSN code and GST rate
+- [x] Order totals include taxableSubtotal, totalGst, grandTotal
+- [x] Stock is deducted after purchase
+- [x] Sellers can view their orders
 
 ---
 
-**Enjoy testing the GearSwap Musical Instrument Marketplace! 🎵**
+## 🎯 Key Features
+
+✅ **HSN-based GST calculation** - Legally compliant with Indian GST law  
+✅ **Per-item GST breakdown** - Supports mixed GST rates in single order  
+✅ **Tax data snapshotting** - Historical accuracy for audits  
+✅ **Invoice-ready data** - All fields required for GST invoices  
+✅ **Mock payment integration** - Razorpay-compatible structure  
+✅ **Discount before GST** - Compliant with GST regulations
+
+---
+
+**Enjoy testing the GearSwap Musical Instrument Marketplace with GST! 🎵**

@@ -19,6 +19,8 @@ export default function EditProductPage() {
     description: '',
     category: '',
     imageUrl: '',
+    hsnCode: '',
+    gstRate: '18',
   });
 
   const [variants, setVariants] = useState([
@@ -40,6 +42,8 @@ export default function EditProductPage() {
           description: data.product.description,
           category: data.product.category,
           imageUrl: data.product.imageUrl,
+          hsnCode: data.product.hsnCode || '',
+          gstRate: data.product.gstRate?.toString() || '18',
         });
 
         if (data.product.variants && data.product.variants.length > 0) {
@@ -98,6 +102,7 @@ export default function EditProductPage() {
           id,
           input: {
             ...formData,
+            gstRate: parseFloat(formData.gstRate),
             variants: variants.map(v => ({
               sku: v.sku,
               price: parseFloat(v.price),
@@ -190,6 +195,53 @@ export default function EditProductPage() {
                     className="input"
                     required
                   />
+                </div>
+              </div>
+            </div>
+
+            {/* GST Information */}
+            <div className="space-y-4 pt-4">
+              <h2 className="text-xl font-semibold border-b pb-2">GST Information</h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    HSN Code <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="hsnCode"
+                    value={formData.hsnCode}
+                    onChange={handleChange}
+                    placeholder="e.g. 92071000"
+                    className="input font-mono"
+                    pattern="[0-9]{4,8}"
+                    title="HSN code must be 4, 6, or 8 digits"
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">4, 6, or 8 digit HSN code</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    GST Rate (%) <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    name="gstRate"
+                    value={formData.gstRate}
+                    onChange={handleChange}
+                    className="input"
+                    required
+                  >
+                    <option value="0">0% - Exempt</option>
+                    <option value="0.25">0.25%</option>
+                    <option value="3">3%</option>
+                    <option value="5">5%</option>
+                    <option value="12">12%</option>
+                    <option value="18">18% - Most Musical Instruments</option>
+                    <option value="28">28%</option>
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">Applicable GST rate</p>
                 </div>
               </div>
             </div>

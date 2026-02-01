@@ -8,6 +8,8 @@ import { connectDatabase } from './config/database';
 import { env } from './config/environment';
 import { createContext } from './middleware/auth.guard';
 
+
+// Force restart: schema update
 async function startServer() {
     // Connect to database
     await connectDatabase();

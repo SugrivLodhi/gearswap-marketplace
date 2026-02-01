@@ -14,6 +14,8 @@ export interface IProduct extends Document {
     category: string;
     imageUrl: string;
     sellerId: mongoose.Types.ObjectId;
+    hsnCode: string; // HSN code for GST (4-8 digits)
+    gstRate: number; // GST rate percentage (e.g., 5, 12, 18, 28)
     variants: IVariant[];
     isDeleted: boolean;
     createdAt: Date;
@@ -73,6 +75,23 @@ const productSchema = new Schema<IProduct>(
             ref: 'User',
             required: true,
             index: true,
+        },
+        hsnCode: {
+            type: String,
+            required: true,
+            validate: {
+                validator: (v: string) => /^\d{4}$|^\d{6}$|^\d{8}$/.test(v),
+                message: 'HSN code must be 4, 6, or 8 digits',
+            },
+        },
+        gstRate: {
+            type: Number,
+            required: true,
+            enum: [0, 0.25, 3, 5, 12, 18, 28],
+            validate: {
+                validator: (v: number) => [0, 0.25, 3, 5, 12, 18, 28].includes(v),
+                message: 'GST rate must be a valid Indian GST rate (0, 0.25, 3, 5, 12, 18, or 28)',
+            },
         },
         variants: {
             type: [variantSchema],
