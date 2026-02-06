@@ -4,10 +4,11 @@
   "description": "Commerce Core Service - Auth, Cart, Order, Payment, Discount",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "nodemon src/index.ts",
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "migrate": "node dist/scripts/migrate.js",
+    "migrate": "ts-node migrations/run-migrations.ts",
+    "seed": "ts-node scripts/seed.ts",
     "test": "jest --coverage"
   },
   "keywords": ["microservice", "commerce", "graphql"],

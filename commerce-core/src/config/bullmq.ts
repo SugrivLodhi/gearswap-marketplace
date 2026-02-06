@@ -10,9 +10,9 @@ const connection = {
 
 // ==================== QUEUES ====================
 
-// Order Processing Queue
-export const orderProcessingQueue = new Queue('order-processing', {
-    connection,
+// Create queues
+export const orderQueue = new Queue('order-processing', {
+    connection: redis,
     defaultJobOptions: {
         attempts: 3,
         backoff: {
