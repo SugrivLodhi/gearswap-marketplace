@@ -1,0 +1,194 @@
+version: '3.8'
+
+services:
+  # ==================== DATABASES ====================
+  
+  # PostgreSQL - Commerce Core Service (Transactional Data)
+  postgres:
+    image: postgres:15-alpine
+    container_name: gearswap-postgres
+    environment:
+      POSTGRES_USER: gearswap
+      POSTGRES_PASSWORD: gearswap_password
+      POSTGRES_DB: commerce_core
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gearswap"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gearswap-network
+
+  # MongoDB - Catalog & Search Service (Product Catalog)
+  mongodb:
+    image: mongo:7
+    container_name: gearswap-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gearswap-network
+
+  # Redis - Caching & Message Queue
+  redis:
+    image: redis:7-alpine
+    container_name: gearswap-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gearswap-network
+
+  # Elasticsearch - Search Engine
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: gearswap-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - gearswap-network
+
+  # ==================== MICROSERVICES ====================
+
+  # Commerce Core Service (Auth, Cart, Order, Payment, Discount)
+  commerce-core:
+    build:
+      context: ./commerce-core
+      dockerfile: Dockerfile
+    container_name: gearswap-commerce-core
+    ports:
+      - "4001:4001"
+    environment:
+      NODE_ENV: development
+      PORT: 4001
+      DATABASE_URL: postgresql://gearswap:gearswap_password@postgres:5432/commerce_core
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      JWT_EXPIRES_IN: 7d
+      CATALOG_SERVICE_URL: http://catalog-search:4002/graphql
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./commerce-core/src:/app/src
+      - /app/node_modules
+    networks:
+      - gearswap-network
+    restart: unless-stopped
+
+  # Catalog & Search Service (Product, Search)
+  catalog-search:
+    build:
+      context: ./catalog-search
+      dockerfile: Dockerfile
+    container_name: gearswap-catalog-search
+    ports:
+      - "4002:4002"
+    environment:
+      NODE_ENV: development
+      PORT: 4002
+      MONGODB_URI: mongodb://mongodb:27017/gearswap
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      REDIS_URL: redis://redis:6379
+      COMMERCE_CORE_URL: http://commerce-core:4001/graphql
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./catalog-search/src:/app/src
+      - /app/node_modules
+    networks:
+      - gearswap-network
+    restart: unless-stopped
+
+  # GraphQL Gateway (Apollo Federation)
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    container_name: gearswap-gateway
+    ports:
+      - "4000:4000"
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      COMMERCE_CORE_URL: http://commerce-core:4001/graphql
+      CATALOG_SEARCH_URL: http://catalog-search:4002/graphql
+      CORS_ORIGIN: http://localhost:3000
+    depends_on:
+      - commerce-core
+      - catalog-search
+    volumes:
+      - ./gateway/src:/app/src
+      - /app/node_modules
+    networks:
+      - gearswap-network
+    restart: unless-stopped
+
+  # ==================== MONITORING (Optional) ====================
+
+  # Redis Commander - Redis GUI
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: gearswap-redis-commander
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    networks:
+      - gearswap-network
+    profiles:
+      - monitoring
+
+# ==================== VOLUMES ====================
+volumes:
+  postgres_data:
+    driver: local
+  mongo_data:
+    driver: local
+  redis_data:
+    driver: local
+  es_data:
+    driver: local
+
+# ==================== NETWORKS ====================
+networks:
+  gearswap-network:
+    driver: bridge

@@ -1,499 +1,531 @@
-# GearSwap Marketplace
+# GearSwap Marketplace - Microservices Architecture
 
-A production-ready multi-vendor marketplace built with modern technologies, demonstrating strong system design, backend modeling, and frontend architecture.
+## 🎯 Overview
 
-## 🎯 Project Overview
+This project has been migrated from a monolithic architecture to a **production-grade microservices architecture** with:
 
-GearSwap is a simplified multi-vendor marketplace that allows:
-- **Buyers** to browse products, add items to cart, apply discounts, and place orders
-- **Sellers** to manage products, create discount codes, and track orders
-- **Multi-vendor support** with proper isolation and role-based access control
-
-This project prioritizes **clarity and explainability** over feature completeness, making it an excellent learning resource and foundation for extension.
-
----
-
-## 🏗️ Tech Stack
-
-### Backend
-- **Runtime**: Node.js + TypeScript
-- **Framework**: Express.js
-- **API**: Apollo Server (GraphQL)
-- **Database**: MongoDB + Mongoose
-- **Authentication**: JWT (JSON Web Tokens)
-- **Testing**: Jest
-
-### Frontend
-- **Framework**: Next.js 14 (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **State Management**: Apollo Client + React Context
-- **Forms**: React Hook Form + Zod
+- **2 Backend Microservices** (Commerce Core + Catalog & Search)
+- **GraphQL Federation Gateway** (single client endpoint)
+- **4 Databases** (PostgreSQL, MongoDB, Redis, Elasticsearch)
+- **Event-Driven Communication** (Redis Pub/Sub)
+- **Background Job Processing** (BullMQ)
+- **Docker Compose** orchestration
 
 ---
 
-## 📁 Project Structure
+## 🏗️ Architecture
+
+```
+┌─────────────┐
+│   Frontend  │
+│  (Next.js)  │
+└──────┬──────┘
+       │
+       ▼
+┌──────────────────────┐
+│  GraphQL Gateway     │  ← Single endpoint (Port 4000)
+│  (Apollo Federation) │
+└──────┬───────────────┘
+       │
+       ├──────────────────────┬──────────────────────┐
+       ▼                      ▼                      ▼
+┌─────────────────┐    ┌──────────────────┐   ┌──────────┐
+│ Commerce Core   │    │ Catalog & Search │   │  Redis   │
+│   (Port 4001)   │    │   (Port 4002)    │   │  Cache   │
+├─────────────────┤    ├──────────────────┤   └──────────┘
+│ • Auth          │    │ • Products       │
+│ • Cart          │    │ • Search         │
+│ • Orders        │    │                  │
+│ • Payments      │    │                  │
+│ • Discounts     │    │                  │
+├─────────────────┤    ├──────────────────┤
+│   PostgreSQL    │    │    MongoDB       │
+│  (Transactional)│    │  (Flexible)      │
+└─────────────────┘    │  Elasticsearch   │
+                       │  (Search Engine) │
+                       └──────────────────┘
+```
+
+---
+
+## 📦 Services
+
+### 1. GraphQL Gateway (Port 4000)
+- **Technology**: Apollo Gateway with Federation v2
+- **Purpose**: Single GraphQL endpoint for frontend
+- **Features**: Schema composition, automatic polling, health checks
+
+### 2. Commerce Core Service (Port 4001)
+- **Database**: PostgreSQL (ACID transactions)
+- **Modules**: auth, cart, order, payment, discount
+- **Features**: JWT authentication, Redis caching, BullMQ jobs, event publishing
+
+### 3. Catalog & Search Service (Port 4002)
+- **Databases**: MongoDB + Elasticsearch
+- **Modules**: product, search
+- **Features**: Product catalog, full-text search, faceted filtering, product indexing
+
+### 4. Infrastructure
+- **PostgreSQL** (Port 5432): Transactional data
+- **MongoDB** (Port 27017): Product catalog
+- **Redis** (Port 6379): Caching + Pub/Sub
+- **Elasticsearch** (Port 9200): Search engine
+- **Redis Commander** (Port 8081): Optional monitoring
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+- **Docker** and **Docker Compose** installed
+- **Node.js** 18+ (for local development)
+- **npm** or **yarn**
+
+### 1. Start All Services
+
+```bash
+# Clone the repository (if not already)
+cd gearswap-marketplace
+
+# Start all services with Docker Compose
+docker-compose up -d
+
+# Check service health
+docker-compose ps
+```
+
+### 2. Install Dependencies
+
+```bash
+# Gateway
+cd gateway
+npm install
+
+# Commerce Core
+cd ../commerce-core
+npm install
+
+# Catalog & Search
+cd ../catalog-search
+npm install
+
+# Frontend
+cd ../frontend
+npm install
+```
+
+### 3. Run Database Migrations
+
+```bash
+# PostgreSQL migrations for Commerce Core
+docker exec gearswap-commerce-core npm run migrate
+```
+
+### 4. Seed Test Data (Optional)
+
+```bash
+# Seed MongoDB with products (existing script)
+cd backend
+npm run seed
+
+# Note: You'll need to migrate users/orders/discounts from MongoDB to PostgreSQL
+```
+
+### 5. Access Services
+
+- **GraphQL Gateway**: http://localhost:4000/graphql
+- **Commerce Core**: http://localhost:4001/graphql
+- **Catalog & Search**: http://localhost:4002/graphql
+- **Redis Commander**: http://localhost:8081
+- **Elasticsearch**: http://localhost:9200
+
+### 6. Start Frontend
+
+```bash
+cd frontend
+npm run dev
+```
+
+Frontend will be available at: http://localhost:3000
+
+---
+
+## 📂 Project Structure
 
 ```
 gearswap-marketplace/
-├── backend/
+├── docker-compose.yml          # All services orchestration
+│
+├── gateway/                    # GraphQL Gateway
 │   ├── src/
-│   │   ├── config/           # Database & environment config
+│   │   ├── index.ts           # Apollo Gateway setup
+│   │   └── config/
+│   ├── package.json
+│   └── Dockerfile
+│
+├── commerce-core/              # Commerce Core Service
+│   ├── src/
+│   │   ├── config/            # DB, Redis, BullMQ
 │   │   ├── modules/
-│   │   │   ├── auth/         # User authentication & JWT
-│   │   │   ├── product/      # Product catalog with variants
-│   │   │   ├── cart/         # Shopping cart with pricing
-│   │   │   ├── order/        # Order lifecycle management
-│   │   │   └── discount/     # Discount codes & validation
-│   │   ├── graphql/          # Schema & resolvers
-│   │   ├── middleware/       # Auth guards
-│   │   └── index.ts          # Server entry point
-│   ├── tests/                # Unit tests
-│   └── package.json
+│   │   │   ├── auth/          # ✅ Complete
+│   │   │   ├── cart/          # ⏳ TODO
+│   │   │   ├── order/         # ⏳ TODO
+│   │   │   ├── discount/      # ⏳ TODO
+│   │   │   └── payment/       # ⏳ TODO
+│   │   ├── jobs/              # BullMQ workers
+│   │   ├── events/            # Event publishers/subscribers
+│   │   ├── middleware/        # Auth guard
+│   │   ├── graphql/           # Combined schema/resolvers
+│   │   └── index.ts           # Server entry point
+│   ├── migrations/            # PostgreSQL migrations
+│   ├── package.json
+│   └── Dockerfile
 │
-├── frontend/
-│   ├── app/                  # Next.js App Router pages
-│   │   ├── (public)/         # Public pages
-│   │   ├── (buyer)/          # Buyer dashboard
-│   │   └── (seller)/         # Seller dashboard
-│   ├── components/           # Reusable UI components
-│   ├── lib/                  # Apollo Client & Auth context
-│   ├── graphql/              # GraphQL queries & mutations
-│   └── package.json
+├── catalog-search/             # Catalog & Search Service
+│   ├── src/
+│   │   ├── config/            # MongoDB, Elasticsearch
+│   │   ├── modules/
+│   │   │   ├── product/       # ⏳ TODO (copy from backend)
+│   │   │   └── search/        # ⏳ TODO
+│   │   ├── jobs/              # Product indexing workers
+│   │   ├── events/            # Event publishers/subscribers
+│   │   ├── graphql/           # Combined schema/resolvers
+│   │   └── index.ts           # Server entry point
+│   ├── package.json
+│   └── Dockerfile
 │
-├── DESIGN_DECISIONS.md       # Architecture & trade-offs
-├── CODE_REVIEW.md            # Self-review & improvements
-├── SEED_DATA.md              # Test data guide
-└── README.md                 # This file
+├── backend/                    # ⚠️ OLD MONOLITH (for reference)
+│   └── src/modules/           # Copy modules from here
+│
+├── frontend/                   # Next.js Frontend
+│   └── lib/apollo-client.ts   # ⚠️ Update to point to gateway
+│
+└── README.md                   # This file
 ```
 
 ---
 
-## 🚀 Getting Started
+## 🔧 Development Workflow
 
-### Prerequisites
+### Running Services Locally (Without Docker)
 
-- **Node.js** 18+ and npm
-- **MongoDB** 5.0+ running locally or remotely
-
-### Backend Setup
-
-1. **Navigate to backend directory**:
-   ```bash
-   cd backend
-   ```
-
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-
-3. **Create environment file**:
-   ```bash
-   cp .env.example .env
-   ```
-
-4. **Configure environment variables** (`.env`):
-   ```env
-   PORT=4000
-   NODE_ENV=development
-   MONGODB_URI=mongodb://localhost:27017/gearswap
-   JWT_SECRET=your-super-secret-jwt-key-change-in-production
-   JWT_EXPIRES_IN=7d
-   CORS_ORIGIN=http://localhost:3000
-   ```
-
-5. **Start the development server**:
-   ```bash
-   npm run dev
-   ```
-
-   Server will be available at: `http://localhost:4000/graphql`
-
-### Frontend Setup
-
-1. **Navigate to frontend directory**:
-   ```bash
-   cd frontend
-   ```
-
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-
-3. **Create environment file**:
-   ```bash
-   cp .env.local.example .env.local
-   ```
-
-4. **Configure environment variables** (`.env.local`):
-   ```env
-   NEXT_PUBLIC_API_URL=http://localhost:4000/graphql
-   ```
-
-5. **Start the development server**:
-   ```bash
-   npm run dev
-   ```
-
-   Application will be available at: `http://localhost:3000`
-
----
-
-## 🧪 Running Tests
-
-### Backend Tests
+#### 1. Start Databases
 
 ```bash
-cd backend
-npm test
+# Start only databases with Docker
+docker-compose up -d postgres mongodb redis elasticsearch
 ```
 
-**Test Coverage**:
-- Cart pricing calculations
-- Discount validation rules
-- Order creation and stock deduction
-- Status lifecycle transitions
+#### 2. Run Services Locally
 
-**Run tests with coverage**:
 ```bash
-npm test -- --coverage
+# Terminal 1: Commerce Core
+cd commerce-core
+npm run dev
+
+# Terminal 2: Catalog & Search
+cd catalog-search
+npm run dev
+
+# Terminal 3: Gateway
+cd gateway
+npm run dev
+
+# Terminal 4: Frontend
+cd frontend
+npm run dev
 ```
 
----
+### Testing GraphQL Federation
 
-## 📊 Database Setup
-
-### MongoDB Connection
-
-The application expects MongoDB to be running on `localhost:27017` by default.
-
-**Using Docker**:
 ```bash
-docker run -d -p 27017:27017 --name mongodb mongo:latest
-```
+# Open GraphQL Playground
+open http://localhost:4000/graphql
 
-**Using MongoDB Atlas** (cloud):
-Update `MONGODB_URI` in `.env`:
-```env
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/gearswap
-```
-
-### Seed Data
-
-Follow the instructions in [SEED_DATA.md](./SEED_DATA.md) to populate the database with test data.
-
----
-
-## 🔑 Authentication
-
-### User Roles
-
-- **BUYER**: Can browse products, manage cart, place orders
-- **SELLER**: Can create products, manage discounts, view orders
--**INFO**: Add product by Seller ,add these domain only when adding image: 
-           domains: ['example.com', 'via.placeholder.com','images.unsplash.com'],
-
-### Sample Credentials (after seeding)
-
-| Role   | Email                | Password   |
-|--------|----------------------|------------|
-| Buyer  | buyer@example.com    | buyer123   |
-| Seller | seller1@example.com  | seller123  |
-
-### JWT Flow
-
-1. User registers or logs in
-2. Backend generates JWT token
-3. Frontend stores token in localStorage
-4. Token is sent in `Authorization: Bearer <token>` header
-5. Backend verifies token and injects user into GraphQL context
-
----
-
-## 📖 API Documentation
-
-### GraphQL Playground
-
-Visit `http://localhost:4000/graphql` to explore the API interactively.
-
-### Key Queries & Mutations
-
-**Authentication**:
-```graphql
-mutation {
-  register(input: { email: "user@example.com", password: "pass123", role: BUYER }) {
-    token
-    user { id email role }
-  }
-}
-
-mutation {
-  login(input: { email: "user@example.com", password: "pass123" }) {
-    token
-    user { id email role }
-  }
-}
-```
-
-**Products** (Public):
-```graphql
+# Test cross-service query
 query {
-  products(filters: { search: "mouse", category: "Electronics" }, pagination: { limit: 20 }) {
+  me {
+    id
+    email
+    role
+  }
+}
+
+# Test product query (once implemented)
+query {
+  products(pagination: { limit: 10 }) {
     edges {
       node {
         id
         name
-        description
-        variants { id sku price stock }
+        seller {
+          email  # Resolved from Commerce Core!
+        }
       }
     }
-    pageInfo { hasNextPage endCursor }
   }
 }
 ```
 
-**Cart** (Buyer):
+---
+
+## ⚠️ Remaining Implementation Tasks
+
+### High Priority
+
+#### 1. Complete Commerce Core Modules
+- [ ] **Cart Module**: Migrate from MongoDB to PostgreSQL
+  - Copy from `backend/src/modules/cart/`
+  - Update to use PostgreSQL models
+  - Add product fetching from Catalog service
+  - Implement Redis caching
+
+- [ ] **Order Module**: Migrate from MongoDB to PostgreSQL
+  - Copy from `backend/src/modules/order/`
+  - Update to use PostgreSQL models
+  - Implement Saga pattern for distributed transactions
+  - Add event publishing (`order.created`, `order.paid`)
+
+- [ ] **Discount Module**: Migrate from MongoDB to PostgreSQL
+  - Copy from `backend/src/modules/discount/`
+  - Update to use PostgreSQL models
+  - Add Redis caching for active discounts
+
+- [ ] **Payment Module**: Keep existing logic
+  - Copy from `backend/src/modules/payment/`
+
+#### 2. Complete Catalog & Search Service
+- [ ] **Product Module**: Copy from existing backend
+  - Copy `backend/src/modules/product/product.model.ts`
+  - Copy `backend/src/modules/product/product.service.ts`
+  - Update resolvers for Federation
+  - Add reference resolver for `seller: User`
+
+- [ ] **Search Module**: Implement Elasticsearch queries
+  - Create search service with Elasticsearch client
+  - Implement full-text search
+  - Implement faceted filtering
+  - Add Redis caching for search results
+
+#### 3. Event-Driven Communication
+- [ ] Create event publishers (Commerce Core)
+  - `order.created`, `order.paid`, `order.shipped`
+- [ ] Create event subscribers (Catalog & Search)
+  - Subscribe to `order.created` → deduct stock
+- [ ] Create event publishers (Catalog & Search)
+  - `product.updated`, `stock.deducted`, `stock.deduction.failed`
+- [ ] Create event subscribers (Commerce Core)
+  - Subscribe to `stock.deduction.failed` → cancel order
+
+#### 4. BullMQ Workers
+- [ ] Order processing worker (Commerce Core)
+  - Process payments
+  - Send confirmation emails
+- [ ] Email worker (Commerce Core)
+  - Send emails via SMTP
+- [ ] Product indexing worker (Catalog & Search)
+  - Index products to Elasticsearch
+- [ ] Stock sync worker (Catalog & Search)
+  - Sync stock from order events
+
+#### 5. Data Migration
+- [ ] Export users from MongoDB
+- [ ] Import users to PostgreSQL
+- [ ] Export carts from MongoDB
+- [ ] Import carts to PostgreSQL
+- [ ] Export orders from MongoDB
+- [ ] Import orders to PostgreSQL
+- [ ] Export discounts from MongoDB
+- [ ] Import discounts to PostgreSQL
+- [ ] Keep products in MongoDB
+- [ ] Index all products to Elasticsearch
+
+#### 6. Frontend Integration
+- [ ] Update `frontend/lib/apollo-client.ts`
+  - Change URI to `http://localhost:4000/graphql` (gateway)
+- [ ] Test all existing features
+- [ ] Verify backward compatibility
+
+---
+
+## 🧪 Testing
+
+### Health Checks
+
+```bash
+# Check all services
+curl http://localhost:4000/health  # Gateway
+curl http://localhost:4001/health  # Commerce Core
+curl http://localhost:4002/health  # Catalog & Search
+```
+
+### GraphQL Queries
+
 ```graphql
+# Test authentication (Commerce Core)
 mutation {
-  addToCart(input: { productId: "123", variantId: "456", quantity: 2 }) {
-    items { productName quantity price subtotal }
-    subtotal
-    discount
-    total
+  login(input: { email: "buyer@example.com", password: "buyer123" }) {
+    token
+    user {
+      id
+      email
+      role
+    }
   }
 }
 
+# Test products (Catalog & Search)
 query {
-  myCart {
-    items { productName quantity price subtotal }
-    subtotal
-    discount
-    total
-  }
-}
-```
-
-**Orders** (Buyer):
-```graphql
-mutation {
-  checkout {
-    id
-    status
-    items { productName price quantity }
-    total
-  }
-}
-
-query {
-  myOrders {
-    id
-    status
-    items { productName price quantity }
-    total
-    createdAt
-  }
-}
-```
-
-**Products** (Seller):
-```graphql
-mutation {
-  createProduct(input: {
-    name: "Gaming Mouse"
-    description: "High-precision mouse"
-    category: "Electronics"
-    imageUrl: "https://example.com/image.jpg"
-    variants: [
-      { sku: "MOUSE-001", price: 49.99, stock: 100, attributes: [{ key: "color", value: "Black" }] }
-    ]
-  }) {
-    id
-    name
-  }
-}
-```
-
-**Discounts** (Seller):
-```graphql
-mutation {
-  createDiscount(input: {
-    code: "SAVE20"
-    type: PERCENTAGE
-    value: 20
-    minimumCartValue: 50
-    maxUses: 100
-  }) {
-    id
-    code
+  products(pagination: { limit: 5 }) {
+    edges {
+      node {
+        id
+        name
+        category
+      }
+    }
   }
 }
 ```
 
 ---
 
-## 🎨 Frontend Features
+## 📊 Database Schemas
 
-### Public Pages
-- **Homepage**: Product listing with search, filters, and pagination
-- **Product Detail**: Variant selection and add to cart
-- **Login/Register**: Authentication forms
+### PostgreSQL (Commerce Core)
+- `users` - User accounts with roles
+- `carts` - Shopping carts (one per buyer)
+- `cart_items` - Items in carts
+- `orders` - Order history
+- `order_items` - Items in orders (snapshot)
+- `discounts` - Discount codes
 
-### Buyer Dashboard
-- **Cart**: View items, apply discounts, see pricing breakdown
-- **Checkout**: Create order from cart
-- **Orders**: View order history and status
+### MongoDB (Catalog & Search)
+- `products` - Product catalog with variants
 
-### Seller Dashboard
-- **Dashboard**: Sales overview and statistics
-- **Products**: CRUD operations for products and variants
-- **Orders**: View and update order status
-- **Discounts**: Create and manage discount codes
+### Elasticsearch
+- `products` - Indexed products for search
 
 ---
 
-## 🔒 Security Features
+## 🔐 Environment Variables
 
-- **JWT Authentication**: Stateless token-based auth
-- **Role-Based Access Control**: Enforced at resolver level
-- **Input Validation**: Prevents invalid data
-- **Password Hashing**: bcrypt with salt rounds
-- **CORS Protection**: Configured origin whitelist
+### Gateway
+```env
+PORT=4000
+COMMERCE_CORE_URL=http://localhost:4001/graphql
+CATALOG_SEARCH_URL=http://localhost:4002/graphql
+CORS_ORIGIN=http://localhost:3000
+```
 
----
+### Commerce Core
+```env
+PORT=4001
+DATABASE_URL=postgresql://gearswap:gearswap_password@localhost:5432/commerce_core
+REDIS_URL=redis://localhost:6379
+JWT_SECRET=your-super-secret-jwt-key-change-in-production
+JWT_EXPIRES_IN=7d
+CATALOG_SERVICE_URL=http://localhost:4002/graphql
+```
 
-## 📈 Performance Optimizations
-
-- **Cursor-Based Pagination**: Efficient for large datasets
-- **MongoDB Indexes**: Optimized query performance
-- **GraphQL Query Shaping**: Fetch only needed fields
-- **Server Components**: Reduced client-side JavaScript (Next.js 14)
+### Catalog & Search
+```env
+PORT=4002
+MONGODB_URI=mongodb://localhost:27017/gearswap
+ELASTICSEARCH_URL=http://localhost:9200
+REDIS_URL=redis://localhost:6379
+COMMERCE_CORE_URL=http://localhost:4001/graphql
+```
 
 ---
 
 ## 📚 Documentation
 
-- **[DESIGN_DECISIONS.md](./DESIGN_DECISIONS.md)**: Architectural decisions, data modeling, trade-offs
-- **[CODE_REVIEW.md](./CODE_REVIEW.md)**: Self-review, known limitations, production improvements
-- **[SEED_DATA.md](./SEED_DATA.md)**: Step-by-step guide to populate test data
+- **[Implementation Plan](./implementation_plan.md)**: Detailed architecture decisions
+- **[Walkthrough](./walkthrough.md)**: Implementation progress
+- **[Task List](./task.md)**: Remaining tasks
+- **[Design Decisions](./DESIGN_DECISIONS.md)**: Original design rationale
 
 ---
 
-## 🧩 Key Design Patterns
+## 🎯 Benefits of Microservices Architecture
 
-### Backend
-
-1. **Service Layer Pattern**: Business logic separated from resolvers
-2. **Repository Pattern**: Data access abstracted in models
-3. **Guard Pattern**: Reusable authorization checks
-4. **Snapshot Pattern**: Orders store complete item details
-
-### Frontend
-
-1. **Compound Components**: Reusable UI building blocks
-2. **Custom Hooks**: Shared logic (useAuth)
-3. **Apollo Client**: Centralized data fetching and caching
-4. **Route Groups**: Clean page organization
+✅ **Scalability**: Scale services independently based on load  
+✅ **Fault Isolation**: One service failure doesn't bring down the entire system  
+✅ **Technology Flexibility**: Use the right database for each service  
+✅ **Team Autonomy**: Teams can work on services independently  
+✅ **Deployment Independence**: Deploy services without affecting others  
+✅ **Performance**: Optimize each service for its specific workload  
 
 ---
 
-## 🚧 Known Limitations
+## 🐛 Troubleshooting
 
-- No payment gateway integration (order status is manual)
-- No image upload (URLs only)
-- No real-time notifications
-- No email verification
-- Basic search (no fuzzy matching)
-
-See [CODE_REVIEW.md](./CODE_REVIEW.md) for detailed limitations and production improvements.
-
----
-
-## 🛠️ Development Workflow
-
-### Backend Development
+### Services Won't Start
 
 ```bash
-cd backend
-npm run seed # Add some dummy data in db and see intail ui
-npm run dev      # Start dev server with hot reload
-npm test         # Run tests
-npm run build    # Build for production
-npm start        # Run production build
+# Check Docker logs
+docker-compose logs gateway
+docker-compose logs commerce-core
+docker-compose logs catalog-search
+
+# Restart services
+docker-compose restart
+
+# Rebuild services
+docker-compose up --build
 ```
 
-### Frontend Development
+### Database Connection Issues
 
 ```bash
-cd frontend
-npm run dev      # Start dev server
-npm run build    # Build for production
-npm start        # Run production build
-npm run lint     # Run ESLint
+# Check PostgreSQL
+docker exec -it gearswap-postgres psql -U gearswap -d commerce_core
+
+# Check MongoDB
+docker exec -it gearswap-mongodb mongosh
+
+# Check Redis
+docker exec -it gearswap-redis redis-cli ping
+
+# Check Elasticsearch
+curl http://localhost:9200/_cluster/health
+```
+
+### GraphQL Federation Issues
+
+```bash
+# Check gateway can reach subgraphs
+curl http://localhost:4001/graphql
+curl http://localhost:4002/graphql
+
+# Check gateway logs
+docker logs gearswap-gateway
 ```
 
 ---
 
-## 📦 Deployment
+## 📝 Next Steps
 
-### Backend Deployment
-
-1. Set production environment variables
-2. Build the application: `npm run build`
-3. Start the server: `npm start`
-
-**Recommended Platforms**: Heroku, Railway, Render, AWS EC2
-
-### Frontend Deployment
-
-1. Build the application: `npm run build`
-2. Deploy to Vercel, Netlify, or any Node.js hosting
-
-**Recommended Platform**: Vercel (optimized for Next.js)
-
-### Database
-
-**Recommended**: MongoDB Atlas (managed cloud database)
+1. **Complete remaining modules** (cart, order, discount, product, search)
+2. **Implement event-driven workflows**
+3. **Create BullMQ workers**
+4. **Migrate data from MongoDB to PostgreSQL**
+5. **Update frontend to use gateway**
+6. **Test end-to-end functionality**
+7. **Deploy to production**
 
 ---
 
 ## 🤝 Contributing
 
-This is a demonstration project, but contributions are welcome!
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Write/update tests
-5. Submit a pull request
+This is a demonstration project showcasing microservices architecture with GraphQL Federation.
 
 ---
 
 ## 📄 License
 
-MIT License - feel free to use this project for learning or as a foundation for your own marketplace.
-
----
-
-## 🙏 Acknowledgments
-
-Built with modern best practices to demonstrate:
-- Clean architecture and separation of concerns
-- Thoughtful data modeling
-- Production-ready patterns
-- Clear documentation and explainability
-
-**Focus**: Learning, clarity, and strong fundamentals over feature completeness.
-
----
-
-## 📞 Support
-
-For questions or issues:
-1. Check [DESIGN_DECISIONS.md](./DESIGN_DECISIONS.md) for architectural explanations
-2. Review [CODE_REVIEW.md](./CODE_REVIEW.md) for known limitations
-3. Follow [SEED_DATA.md](./SEED_DATA.md) for setup guidance
+MIT License
 
 ---
 
