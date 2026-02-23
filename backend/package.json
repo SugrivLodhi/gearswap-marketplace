@@ -7,25 +7,35 @@
     "dev": "nodemon src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
+    "worker:dev": "nodemon src/workers/index.ts",
+    "worker:start": "node dist/workers/index.js",
     "test": "jest --coverage",
     "test:watch": "jest --watch",
     "seed": "ts-node src/scripts/seed.ts",
     "verify": "ts-node src/scripts/verify.ts",
     "test:product": "ts-node src/scripts/test-product.ts"
   },
-  "keywords": ["marketplace", "graphql", "typescript"],
+  "keywords": [
+    "marketplace",
+    "graphql",
+    "typescript"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
     "@apollo/server": "^4.10.0",
-    "express": "^4.18.2",
-    "mongoose": "^8.1.0",
     "bcryptjs": "^2.4.3",
-    "jsonwebtoken": "^9.0.2",
-    "dotenv": "^16.4.1",
+    "bullmq": "^5.70.1",
     "cors": "^2.8.5",
+    "dotenv": "^16.4.1",
+    "express": "^4.18.2",
     "graphql": "^16.8.1",
-    "graphql-tag": "^2.12.6"
+    "graphql-tag": "^2.12.6",
+    "ioredis": "^5.9.3",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.1.0",
+    "pino": "^10.3.1",
+    "pino-pretty": "^13.1.3"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

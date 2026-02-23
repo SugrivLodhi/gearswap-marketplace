@@ -15,6 +15,11 @@ async function testProductCreation() {
             description: 'A test guitar',
             category: 'Electric Guitars',
             imageUrl: 'http://example.com/image.jpg',
+            hsnCode: '92099900',
+            gstRate: 12,
+            sgstRate: 6,
+            cgstRate: 6,
+            igstRate: 0,
             variants: [
                 {
                     sku: `TEST-${Date.now()}`,
