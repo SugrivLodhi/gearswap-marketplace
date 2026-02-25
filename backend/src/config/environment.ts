@@ -13,6 +13,14 @@ interface Environment {
     redisHost: string;
     redisPort: number;
     redisPassword: string | undefined;
+    // Rate Limiting
+    rateLimitGlobalMax: number;
+    rateLimitGlobalWindow: number;
+    rateLimitAuthMax: number;
+    rateLimitAuthWindow: number;
+    rateLimitUserMax: number;
+    rateLimitUserWindow: number;
+    rateLimitSkipOnRedisError: boolean;
 }
 
 const getEnvVariable = (key: string, defaultValue?: string): string => {
@@ -34,4 +42,12 @@ export const env: Environment = {
     redisHost: getEnvVariable('REDIS_HOST', 'localhost'),
     redisPort: parseInt(getEnvVariable('REDIS_PORT', '6379'), 10),
     redisPassword: process.env['REDIS_PASSWORD'] || undefined,
+    // Rate Limiting — all optional with production-safe defaults
+    rateLimitGlobalMax: parseInt(getEnvVariable('RATE_LIMIT_GLOBAL_MAX', '100'), 10),
+    rateLimitGlobalWindow: parseInt(getEnvVariable('RATE_LIMIT_GLOBAL_WINDOW', '900'), 10),
+    rateLimitAuthMax: parseInt(getEnvVariable('RATE_LIMIT_AUTH_MAX', '5'), 10),
+    rateLimitAuthWindow: parseInt(getEnvVariable('RATE_LIMIT_AUTH_WINDOW', '900'), 10),
+    rateLimitUserMax: parseInt(getEnvVariable('RATE_LIMIT_USER_MAX', '300'), 10),
+    rateLimitUserWindow: parseInt(getEnvVariable('RATE_LIMIT_USER_WINDOW', '900'), 10),
+    rateLimitSkipOnRedisError: getEnvVariable('RATE_LIMIT_SKIP_ON_REDIS_ERROR', 'true') === 'true',
 };
