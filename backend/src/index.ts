@@ -13,11 +13,18 @@ import {
     userRateLimiter,
 } from './middleware/rateLimiter.middleware';
 import { createBullBoardAdapter } from './config/bullboard';
+import { createEmailWorker } from './workers/email.worker';
 
 // Force restart: schema update
 async function startServer() {
     // Connect to database
     await connectDatabase();
+
+    // -------------------------------------------------------------------------
+    // Start BullMQ workers — must be initialised before the server begins
+    // accepting requests so no jobs are missed on startup.
+    // -------------------------------------------------------------------------
+    createEmailWorker();
 
     // Create Express app
     const app = express();
