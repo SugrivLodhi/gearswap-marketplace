@@ -1,6 +1,6 @@
 # Gearswap Marketplace: Feature Roadmap & Ideas
 
-Based on the scan of your architecture (GraphQL Federation, Microservices, BullMQ, Next.js, and core modules like `auth`, `cart`, `discount`, `order`, `payment`, `product`), here is a curated list of features you can implement next to elevate your marketplace.
+Based on the scan of your architecture (GraphQL, Monolithic Node.js Backend, BullMQ, Next.js, and core modules like `auth`, `cart`, `discount`, `order`, `payment`, `product`), here is a curated list of features you can implement next to elevate your marketplace.
 
 They are categorized by complexity and impact. 
 
@@ -38,8 +38,7 @@ Peer-to-peer marketplaces run on trust.
 Keep users coming back with automated notifications.
 * **How it works:** A user saves a search (e.g., "Fender Stratocaster under $1000"). When a new product matching this is listed, or a price drops, they get an email.
 * **Implementation Ideas:**
-  * Utilize your `catalog-search` microservice.
-  * Create a **BullMQ Repeater Job** (Cron) that runs every 15 minutes, matches new products against the `SavedSearch` table, and queues emails via your email worker.
+  * Create a **BullMQ Repeater Job** (Cron) that runs every 15 minutes, matches new products against the `SavedSearch` table within your monolith, and queues emails via your email worker.
 
 ### 5. Social Login (Google / Apple / GitHub)
 Reduce friction during signup to increase conversions.
@@ -56,7 +55,7 @@ Reduce friction during signup to increase conversions.
 Sometimes an offer is too formal; a buyer just wants to ask, "Are there any scratches on the back?"
 * **Implementation Ideas:**
   * Implement **GraphQL Subscriptions** (via Apollo Server) or use **Socket.io**.
-  * Use **Redis Pub/Sub** (you already have Redis configured for rate limiting and BullMQ!) to scale the chat across multiple backend instances.
+  * Use **Redis Pub/Sub** (you already have Redis configured for rate limiting and BullMQ!) to scale the chat across multiple backend instances if you ever deploy more than one monolithic node.
   * Store messages in MongoDB for fast retrieval.
 
 ### 7. Multi-party Payments & Escrow (Stripe Connect)
@@ -71,4 +70,4 @@ If you aren't doing this already, managing seller payouts manually becomes a leg
 
 ## 🛠️ Developer Experience (DX) Features
 * **Admin Dashboard:** Next.js hidden routes (`/admin/*`) guarded by role-based access control (RBAC) in your JWTs to monitor active users, revenue, and queue health (integrate `@bull-board/express` which is in your `package.json`!). 
-* **Elasticsearch/Typesense:** If your `catalog-search` is using standard SQL/Mongo, consider offloading search to Typesense or Elasticsearch for fuzzy matching ("Startocaster" -> "Stratocaster").
+* **Elasticsearch/Typesense:** If your default database search is slow, consider offloading search to Typesense or Elasticsearch for fuzzy matching ("Startocaster" -> "Stratocaster").
