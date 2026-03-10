@@ -463,3 +463,10 @@ export const UPDATE_DISCOUNT = gql`
     }
   }
 `;
+
+export const SEARCH_SUGGESTIONS = gql`
+  query SearchSuggestions($query: String!) {
+    searchSuggestions(query: $query)
+  }
+`;
+

@@ -31,6 +31,11 @@ export const productResolvers = {
         ) => {
             return productService.listProducts(filters, pagination);
         },
+
+        // Public: Get search suggestions
+        searchSuggestions: async (_: any, { query }: { query: string }) => {
+            return productService.searchSuggestions(query);
+        },
     },
 
     Mutation: {

@@ -1,0 +1,8 @@
+{
+  "query": "query($filters: ProductFilters) { products(filters: $filters) { edges { node { name id } } } }",
+  "variables": {
+    "filters": {
+      "search": "Startocaster"
+    }
+  }
+}
