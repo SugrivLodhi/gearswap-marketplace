@@ -425,11 +425,31 @@ export const GET_MY_DISCOUNTS = gql`
       value
       expiryDate
       minimumCartValue
+      targetProductIds
       maxUses
       currentUses
       isActive
       createdAt
     }
+  }
+`;
+
+export const GET_CHAT_MESSAGES = gql`
+  query GetChatMessages($roomId: String!, $limit: Int) {
+    chatMessages(roomId: $roomId, limit: $limit) {
+      id
+      roomId
+      senderId
+      senderRole
+      content
+      createdAt
+    }
+  }
+`;
+
+export const GET_CHAT_ROOMS = gql`
+  query GetChatRooms {
+    chatRooms
   }
 `;
 
