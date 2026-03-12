@@ -235,6 +235,8 @@ class ProductService {
                         q: search,
                         query_by: 'name,description',
                         per_page: 100, // Fetch top matches
+                        num_typos: 2,
+                        typo_tokens_threshold: 1
                         // Pagination logic via cursor -> page
                         // For simplicity, we get top matches and filter in mongo
                     });
@@ -388,7 +390,7 @@ class ProductService {
      */
     async searchSuggestions(query: string): Promise<string[]> {
         if (!query || query.length < 2) return [];
-
+        console.log("searchSuggestions", query);
         try {
             const results = await typesenseClient
                 .collections(PRODUCTS_COLLECTION_NAME)
@@ -397,6 +399,8 @@ class ProductService {
                     q: query,
                     query_by: 'name',
                     per_page: 5,
+                    num_typos: 2,
+                    typo_tokens_threshold: 1,
                     group_by: 'name', // Only unique names
                 });
 
