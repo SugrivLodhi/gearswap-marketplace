@@ -14,6 +14,8 @@ import {
 } from './middleware/rateLimiter.middleware';
 import { createBullBoardAdapter } from './config/bullboard';
 import { createEmailWorker } from './workers/email.worker';
+import { createServer } from 'http';
+import { initChatSocket } from './modules/chat/chat.socket';
 
 // Force restart: schema update
 async function startServer() {
@@ -26,8 +28,12 @@ async function startServer() {
     // -------------------------------------------------------------------------
     createEmailWorker();
 
-    // Create Express app
+    // Create Express app & HTTP server
     const app = express();
+    const httpServer = createServer(app);
+
+    // Initialize Socket.io Chat Server
+    initChatSocket(httpServer);
 
     // -------------------------------------------------------------------------
     // Trust proxy — MUST be set before any middleware that reads req.ip.
@@ -95,8 +101,8 @@ async function startServer() {
         })
     );
 
-    // Start server
-    app.listen(env.port, () => {
+    // Start server via HTTP server (needed for sockets)
+    httpServer.listen(env.port, () => {
         console.log(`🚀 Server ready at http://localhost:${env.port}/graphql`);
         console.log(`📊 Health check at http://localhost:${env.port}/health`);
         console.log(`🛡️  Rate limiting active (global: ${env.rateLimitGlobalMax} req/${env.rateLimitGlobalWindow}s)`);

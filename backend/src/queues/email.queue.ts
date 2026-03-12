@@ -34,19 +34,19 @@ const sharedQueueOptions: Partial<QueueOptions> = {
 
 // ─── Email Queue ───────────────────────────────────────────────────────────
 
-let emailQueueInstance: Queue<EmailJobData, void, EmailJobName> | null = null;
+let emailQueueInstance: Queue | null = null;
 
 /**
  * Returns a singleton email Queue instance.
  * Calling this lazily means the server can boot without Redis
  * if you haven't enqueued anything yet.
  */
-export function getEmailQueue(): Queue<EmailJobData, void, EmailJobName> {
+export function getEmailQueue(): Queue {
     if (!emailQueueInstance) {
-        emailQueueInstance = new Queue<EmailJobData, void, EmailJobName>(
+        emailQueueInstance = new Queue(
             QUEUE_NAMES.EMAIL,
             {
-                connection: getRedisConnection(),
+                connection: getRedisConnection() as any,
                 ...sharedQueueOptions,
             }
         );

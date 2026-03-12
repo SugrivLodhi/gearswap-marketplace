@@ -27,6 +27,15 @@ export const typeDefs = gql`
     createdAt: String!
   }
 
+  type ChatMessage {
+    id: ID!
+    roomId: String!
+    senderId: ID!
+    senderRole: UserRole!
+    content: String!
+    createdAt: String!
+  }
+
   type AuthPayload {
     token: String!
     user: User!
@@ -287,6 +296,10 @@ export const typeDefs = gql`
 
     # Search Suggestions (Public)
     searchSuggestions(query: String!): [String!]!
+
+    # Chat (Authenticated)
+    chatMessages(roomId: String!, limit: Int): [ChatMessage!]!
+    chatRooms: [String!]!
   }
 
   # Mutations
