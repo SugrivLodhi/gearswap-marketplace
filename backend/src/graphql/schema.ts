@@ -284,6 +284,9 @@ export const typeDefs = gql`
 
     # Discount validation (Public)
     validateDiscount(code: String!, cartValue: Float!): DiscountValidation!
+
+    # Search Suggestions (Public)
+    searchSuggestions(query: String!): [String!]!
   }
 
   # Mutations

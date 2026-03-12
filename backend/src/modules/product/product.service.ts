@@ -1,5 +1,11 @@
 import { Product, IProduct, IVariant } from './product.model';
 import mongoose from 'mongoose';
+import {
+    typesenseClient,
+    PRODUCTS_COLLECTION_NAME,
+    upsertProductInTypesense,
+    deleteProductFromTypesense
+} from '../../utils/typesense';
 
 export interface VariantInput {
     sku: string;
@@ -112,6 +118,9 @@ class ProductService {
             variants: transformedVariants,
         });
 
+        // Push to typescript
+        await upsertProductInTypesense(product);
+
         return product;
     }
 
@@ -162,6 +171,10 @@ class ProductService {
         }
 
         await product.save();
+
+        // Update Typesense index
+        await upsertProductInTypesense(product);
+
         return product;
     }
 
@@ -181,6 +194,9 @@ class ProductService {
         if (result.modifiedCount === 0) {
             throw new Error('Product not found or access denied');
         }
+
+        // Remove from Typesense
+        await deleteProductFromTypesense(productId);
 
         return true;
     }
@@ -207,13 +223,46 @@ class ProductService {
 
         // Build query
         const query: any = { isDeleted: false };
+        let skipTypesense = false;
 
-        // Text search (Partial matching with Regex)
+        // Text search with Typesense
         if (search) {
-            query.$or = [
-                { name: { $regex: search, $options: 'i' } },
-                { description: { $regex: search, $options: 'i' } },
-            ];
+            try {
+                const searchResults = await typesenseClient
+                    .collections(PRODUCTS_COLLECTION_NAME)
+                    .documents()
+                    .search({
+                        q: search,
+                        query_by: 'name,description',
+                        per_page: 100, // Fetch top matches
+                        num_typos: 2,
+                        typo_tokens_threshold: 1
+                        // Pagination logic via cursor -> page
+                        // For simplicity, we get top matches and filter in mongo
+                    });
+
+                // Extract product IDs
+                const matchedIds = searchResults.hits?.map((hit) => (hit.document as any).id) || [];
+
+                if (matchedIds.length === 0) {
+                    // Fast return if no matches in Typesense
+                    return {
+                        edges: [],
+                        pageInfo: { hasNextPage: false, endCursor: null }
+                    };
+                }
+
+                // Filter MongoDB based on those IDs
+                query._id = { $in: matchedIds.map(id => new mongoose.Types.ObjectId(id)) };
+                skipTypesense = true;
+            } catch (error) {
+                console.error("Typesense search failed, falling back to MongoDB regex:", error);
+                // Fallback Text search (Partial matching with Regex)
+                query.$or = [
+                    { name: { $regex: search, $options: 'i' } },
+                    { description: { $regex: search, $options: 'i' } },
+                ];
+            }
         }
 
         // Category filter
@@ -236,8 +285,18 @@ class ProductService {
         }
 
         // Cursor-based pagination
+        // Note: if Typesense search was used, _id query might already be set to $in array, 
+        // so we must use $and logic or assume cursor applies to standard mongo pagination.
+        // For standard cursor-based pagination, we add $gt to the existing _id conditions
         if (cursor) {
-            query._id = { $gt: new mongoose.Types.ObjectId(cursor) };
+            if (query._id && query._id.$in) {
+                query._id = {
+                    $in: query._id.$in,
+                    $gt: new mongoose.Types.ObjectId(cursor)
+                };
+            } else {
+                query._id = { $gt: new mongoose.Types.ObjectId(cursor) };
+            }
         }
 
         // Execute query
@@ -324,6 +383,38 @@ class ProductService {
 
         variant.stock = newStock;
         await product.save();
+    }
+
+    /**
+     * Get search suggestions from Typesense
+     */
+    async searchSuggestions(query: string): Promise<string[]> {
+        if (!query || query.length < 2) return [];
+        console.log("searchSuggestions", query);
+        try {
+            const results = await typesenseClient
+                .collections(PRODUCTS_COLLECTION_NAME)
+                .documents()
+                .search({
+                    q: query,
+                    query_by: 'name',
+                    per_page: 5,
+                    num_typos: 2,
+                    typo_tokens_threshold: 1,
+                    group_by: 'name', // Only unique names
+                });
+
+            // If grouped, results come in 'grouped_hits'
+            if (results.grouped_hits) {
+                return results.grouped_hits.map(group => (group.hits[0].document as any).name);
+            }
+
+            // Fallback to regular hits if grouping fails or not configured
+            return results.hits?.map(hit => (hit.document as any).name) || [];
+        } catch (error) {
+            console.error("Typesense suggestions failed:", error);
+            return [];
+        }
     }
 }
 

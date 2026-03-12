@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useMutation } from '@apollo/client';
-import { GET_PRODUCTS, ADD_TO_CART } from '@/graphql/queries';
+import { GET_PRODUCTS, ADD_TO_CART, SEARCH_SUGGESTIONS } from '@/graphql/queries';
 import { ProductCard } from '@/components/ProductCard';
 import { Navbar } from '@/components/Navbar';
 import { useState } from 'react';
@@ -14,6 +14,7 @@ export default function HomePage() {
   const router = useRouter();
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const { isBuyer } = useAuth();
 
   const [debouncedSearch] = useDebounce(search, 500);
@@ -30,6 +31,13 @@ export default function HomePage() {
       },
     },
   });
+
+  const { data: suggestionData } = useQuery(SEARCH_SUGGESTIONS, {
+    variables: { query: search },
+    skip: search.length < 2,
+  });
+
+  const suggestions = suggestionData?.searchSuggestions || [];
 
   const [addToCart] = useMutation(ADD_TO_CART, {
     refetchQueries: ['GetMyCart'],
@@ -78,13 +86,36 @@ export default function HomePage() {
         {/* Search and Filters */}
         <div className="bg-white rounded-xl shadow-md p-6 mb-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input
-              type="text"
-              placeholder="Search products..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="input"
-            />
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search products (e.g. Stratocaster)..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setShowSuggestions(true);
+                }}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)} // Delay to allow click
+                className="input w-full"
+              />
+              {showSuggestions && suggestions.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+                  {suggestions.map((suggestion: string, index: number) => (
+                    <button
+                      key={index}
+                      className="w-full text-left px-4 py-2 hover:bg-primary-50 hover:text-primary-700 transition-colors text-sm font-medium border-b border-gray-50 last:border-0"
+                      onClick={() => {
+                        setSearch(suggestion);
+                        setShowSuggestions(false);
+                      }}
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}

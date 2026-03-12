@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { User, UserRole, IUser } from './auth.model';
 import { env } from '../../config/environment';
+import { enqueueWelcomeEmail } from '../../queues';
 
 export interface RegisterInput {
     email: string;
@@ -51,6 +52,13 @@ class AuthService {
             email,
             password,
             role,
+        });
+
+        // Enqueue welcome email as a background job (fire-and-forget, idempotent)
+        await enqueueWelcomeEmail({
+            jobId: `welcome-${user._id.toString()}`, // deduplication key
+            userId: user._id.toString(),
+            email: user.email,
         });
 
         // Generate token

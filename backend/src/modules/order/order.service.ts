@@ -2,6 +2,8 @@ import { Order, IOrder, OrderStatus, IOrderItem } from './order.model';
 import { cartService } from '../cart/cart.service';
 import { productService } from '../product/product.service';
 import { discountService } from '../discount/discount.service';
+import { User } from '../auth/auth.model';
+import { enqueueOrderConfirmationEmail } from '../../queues';
 import mongoose from 'mongoose';
 
 class OrderService {
@@ -163,6 +165,18 @@ class OrderService {
 
         // Clear cart
         await cartService.clearCart(buyerId);
+
+        // Enqueue order confirmation email (fire-and-forget, idempotent)
+        const buyer = await User.findById(buyerId).select('email').lean();
+        if (buyer) {
+            await enqueueOrderConfirmationEmail({
+                jobId: `order-confirm-${order._id.toString()}`, // deduplication key
+                orderId: order._id.toString(),
+                buyerEmail: buyer.email,
+                total: grandTotal,
+                currency: 'INR',
+            });
+        }
 
         return order;
     }
