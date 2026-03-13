@@ -84,6 +84,12 @@ export function Navbar() {
                     >
                       Discounts
                     </Link>
+                    <Link
+                      href="/seller/chat"
+                      className="text-gray-700 hover:text-primary-600 transition-colors font-medium"
+                    >
+                      Messages
+                    </Link>
                   </>
                 )}
 

@@ -113,7 +113,7 @@ export function createEmailWorker(concurrency = 5): Worker<EmailJobData, void, E
             }
         },
         {
-            connection: getRedisConnection(),
+            connection: getRedisConnection() as any,
             concurrency,
         }
     );

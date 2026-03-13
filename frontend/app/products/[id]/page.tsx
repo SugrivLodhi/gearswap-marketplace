@@ -3,6 +3,7 @@
 import { useQuery, useMutation } from '@apollo/client';
 import { GET_PRODUCT, ADD_TO_CART } from '@/graphql/queries';
 import { Navbar } from '@/components/Navbar';
+import { ChatButton } from '@/components/chat/ChatButton';
 import { Button } from '@/components/ui/Button';
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -178,6 +179,15 @@ export default function ProductDetailPage() {
           </div>
         </div>
       </main>
+
+      {/* Floating Chat Button for Buyers */}
+      {product && (
+        <ChatButton
+          productId={product.id}
+          sellerId={product.seller.id}
+          productName={product.name}
+        />
+      )}
     </div>
   );
 }
