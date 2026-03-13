@@ -55,6 +55,12 @@ export function Navbar() {
                     >
                       Orders
                     </Link>
+                    <Link
+                      href="/buyer/wishlist"
+                      className="text-gray-700 hover:text-primary-600 transition-colors font-medium"
+                    >
+                      Wishlist
+                    </Link>
                   </>
                 )}
 

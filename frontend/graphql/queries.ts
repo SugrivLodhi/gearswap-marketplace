@@ -38,6 +38,7 @@ export const GET_PRODUCTS = gql`
           description
           category
           imageUrl
+          isWishlisted
           variants {
             id
             sku
@@ -72,6 +73,7 @@ export const GET_PRODUCT = gql`
       sgstRate
       cgstRate
       igstRate
+      isWishlisted
       seller {
         id
         email
