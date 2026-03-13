@@ -4,6 +4,7 @@ import { cartResolvers } from '../modules/cart/cart.resolvers';
 import { orderResolvers } from '../modules/order/order.resolvers';
 import { discountResolvers } from '../modules/discount/discount.resolvers';
 import { chatResolvers } from '../modules/chat/chat.resolvers';
+import { wishlistResolvers } from '../modules/wishlist/wishlist.resolvers';
 
 /**
  * Custom resolver for Variant attributes
@@ -44,6 +45,7 @@ export const resolvers = {
         ...orderResolvers.Query,
         ...discountResolvers.Query,
         ...chatResolvers.Query,
+        ...wishlistResolvers.Query,
     },
     Mutation: {
         ...authResolvers.Mutation,
@@ -51,9 +53,11 @@ export const resolvers = {
         ...cartResolvers.Mutation,
         ...orderResolvers.Mutation,
         ...discountResolvers.Mutation,
+        ...wishlistResolvers.Mutation,
     },
     Product: {
         ...productResolvers.Product,
+        ...wishlistResolvers.Product,
     },
     Variant: {
         attributes: variantAttributesResolver,

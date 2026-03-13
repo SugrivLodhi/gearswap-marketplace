@@ -69,6 +69,7 @@ export const typeDefs = gql`
     variants: [Variant!]!
     createdAt: String!
     updatedAt: String!
+    isWishlisted: Boolean!
   }
 
   type ProductEdge {
@@ -300,6 +301,9 @@ export const typeDefs = gql`
     # Chat (Authenticated)
     chatMessages(roomId: String!, limit: Int): [ChatMessage!]!
     chatRooms: [String!]!
+
+    # Wishlist (Buyer only)
+    wishlist: [Product!]!
   }
 
   # Mutations
@@ -330,5 +334,8 @@ export const typeDefs = gql`
     createDiscount(input: CreateDiscountInput!): Discount!
     updateDiscount(id: ID!, input: UpdateDiscountInput!): Discount!
     deleteDiscount(id: ID!): Boolean!
+
+    # Wishlist (Buyer only)
+    toggleWishlist(productId: ID!): Product!
   }
 `;
