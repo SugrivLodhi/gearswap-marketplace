@@ -110,6 +110,24 @@ export const GET_MY_CART = gql`
   }
 `;
 
+export const GET_CART_RECOMMENDATIONS = gql`
+  query GetCartRecommendations($limit: Int) {
+    cartRecommendations(limit: $limit) {
+      id
+      name
+      description
+      category
+      imageUrl
+      variants {
+        id
+        sku
+        price
+        stock
+      }
+    }
+  }
+`;
+
 export const ADD_TO_CART = gql`
   mutation AddToCart($input: AddToCartInput!) {
     addToCart(input: $input) {

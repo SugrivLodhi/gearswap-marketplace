@@ -4,6 +4,7 @@ import {
     AddToCartInput,
     UpdateCartItemInput,
 } from './cart.service';
+import { recommendationService } from '../recommendation/recommendation.service';
 
 export const cartResolvers = {
     Query: {
@@ -11,6 +12,14 @@ export const cartResolvers = {
         myCart: async (_: any, __: any, context: GraphQLContext) => {
             const user = requireBuyer(context);
             return cartService.getCartWithPricing(user.userId);
+        },
+
+        // Buyer only: Get cart recommendations
+        cartRecommendations: async (_: any, { limit }: { limit?: number }, context: GraphQLContext) => {
+            const user = requireBuyer(context);
+            const cart = await cartService.getOrCreateCart(user.userId);
+            const itemIds = cart.items.map((item: any) => item.productId.toString());
+            return recommendationService.getCartRecommendations(itemIds, limit);
         },
     },
 

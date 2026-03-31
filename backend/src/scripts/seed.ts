@@ -4,6 +4,7 @@ import { Product } from '../modules/product/product.model';
 import { Discount, DiscountType } from '../modules/discount/discount.model';
 import { connectDatabase } from '../config/database';
 import bcrypt from 'bcryptjs';
+import { getRedisConnection } from '../config/redis';
 
 /**
  * GearSwap - Musical Instrument Marketplace Seeder (India Edition)
@@ -408,6 +409,43 @@ async function seed() {
 
         console.log('✅ Created 3 discount codes\n');
 
+        // Redis Seeding for Recommendations
+        console.log('🤖 Seeding recommendations in Redis...');
+        const redis = getRedisConnection();
+        // Clear old recommendations
+        const keys = await redis.keys('product:recommendations:*');
+        if (keys.length > 0) {
+            await redis.del(...keys);
+        }
+
+        const allProducts = await Product.find({});
+        const electricGuitars = allProducts.filter(p => p.category === 'Electric Guitars');
+        const amps = allProducts.filter(p => p.category === 'Amplifiers');
+        const acousticGuitars = allProducts.filter(p => p.category === 'Acoustic Guitars');
+        const audioEquip = allProducts.filter(p => p.category === 'Audio Equipment');
+        
+        const pipeline = redis.pipeline();
+
+        // Cross-link Electric Guitars with Amps
+        for (const eg of electricGuitars) {
+            for (const amp of amps) {
+                // People who bought/carted this electric guitar also carted this amp
+                pipeline.zincrby(`product:recommendations:${eg._id}`, 10, amp._id.toString());
+                pipeline.zincrby(`product:recommendations:${amp._id}`, 10, eg._id.toString());
+            }
+        }
+
+        // Cross-link Acoustic Guitars with Audio Equipment
+        for (const ag of acousticGuitars) {
+            for (const eq of audioEquip) {
+                pipeline.zincrby(`product:recommendations:${ag._id}`, 5, eq._id.toString());
+                pipeline.zincrby(`product:recommendations:${eq._id}`, 5, ag._id.toString());
+            }
+        }
+
+        await pipeline.exec();
+        console.log('✅ Created dummy product recommendations');
+
         console.log('🎉 SEEDING COMPLETE (India Localization + Expanded Catalog)!');
 
     } catch (error) {
@@ -415,6 +453,8 @@ async function seed() {
         process.exit(1);
     } finally {
         await mongoose.connection.close();
+        const redis = getRedisConnection();
+        await redis.quit();
         process.exit(0);
     }
 }

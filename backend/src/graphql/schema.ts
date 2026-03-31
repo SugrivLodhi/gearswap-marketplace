@@ -276,6 +276,7 @@ export const typeDefs = gql`
 
     # Cart (Buyer only)
     myCart: CartWithPricing!
+    cartRecommendations(limit: Int): [Product!]!
 
     # Orders (Buyer)
     myOrders: [Order!]!

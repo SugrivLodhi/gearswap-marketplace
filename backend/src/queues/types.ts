@@ -30,10 +30,22 @@ export type EmailJobData = WelcomeEmailJobData | OrderConfirmationEmailJobData;
 /** Discriminant: the job name used when calling queue.add() */
 export type EmailJobName = 'welcome-email' | 'order-confirmation-email';
 
+// ─── Recommendation Job Data ─────────────────────────────────────────────────
+
+export interface UpdateRecommendationsJobData {
+    jobId: string;
+    userId: string;
+    itemIds: string[];
+}
+
+export type RecommendationJobData = UpdateRecommendationsJobData;
+export type RecommendationJobName = 'update-recommendations';
+
 // ─── Queue Names (centralised to prevent typos) ──────────────────────────────
 
 export const QUEUE_NAMES = {
     EMAIL: 'email',
+    RECOMMENDATION: 'recommendation',
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];

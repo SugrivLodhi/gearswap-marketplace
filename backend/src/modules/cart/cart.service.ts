@@ -2,6 +2,7 @@ import { Cart, ICart, ICartItem } from './cart.model';
 import { productService } from '../product/product.service';
 import { discountService } from '../discount/discount.service';
 import mongoose from 'mongoose';
+import { enqueueUpdateRecommendations } from '../../queues';
 
 export interface AddToCartInput {
     productId: string;
@@ -105,6 +106,16 @@ class CartService {
         }
 
         await cart.save();
+        
+        // Asynchronously update product recommendations mapping
+        void enqueueUpdateRecommendations({
+            userId: buyerId,
+            itemIds: cart.items.map(item => item.productId.toString())
+        }).catch(err => {
+            // Log but don't fail the request
+            console.error('Failed to queue recommendation update:', err);
+        });
+
         return cart;
     }
 
@@ -153,6 +164,15 @@ class CartService {
         }
 
         await cart.save();
+        
+        // Asynchronously update product recommendations mapping
+        void enqueueUpdateRecommendations({
+            userId: buyerId,
+            itemIds: cart.items.map(item => item.productId.toString())
+        }).catch(err => {
+            console.error('Failed to queue recommendation update:', err);
+        });
+
         return cart;
     }
 

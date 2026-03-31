@@ -18,6 +18,7 @@ import { connectDatabase } from '../config/database';
 import { closeRedisConnection } from '../config/redis';
 import { logger } from '../utils/logger';
 import { createEmailWorker } from './email.worker';
+import { createRecommendationWorker } from './recommendation.worker';
 
 async function startWorkers(): Promise<void> {
     // Connect to MongoDB in case workers need to query the DB
@@ -26,6 +27,10 @@ async function startWorkers(): Promise<void> {
     // Instantiate all workers
     const emailWorker = createEmailWorker(
         parseInt(process.env['WORKER_EMAIL_CONCURRENCY'] ?? '5', 10)
+    );
+    
+    const recommendationWorker = createRecommendationWorker(
+        parseInt(process.env['WORKER_RECOMMENDATION_CONCURRENCY'] ?? '2', 10)
     );
 
     logger.info('🏭 All workers started — waiting for jobs...');
@@ -43,6 +48,9 @@ async function startWorkers(): Promise<void> {
             // Worker.close() drains in-flight jobs before resolving
             await emailWorker.close();
             logger.info('✅ Email worker closed');
+            
+            await recommendationWorker.close();
+            logger.info('✅ Recommendation worker closed');
 
             await closeRedisConnection();
             logger.info('✅ Graceful shutdown complete');
