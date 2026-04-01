@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 export enum UserRole {
   BUYER = 'BUYER',
   SELLER = 'SELLER',
+  SUPER_ADMIN = 'SUPER_ADMIN',
 }
 
 interface User {
@@ -22,6 +23,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isBuyer: boolean;
   isSeller: boolean;
+  isSuperAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -72,6 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAuthenticated: !!token && !!user,
     isBuyer: user?.role === UserRole.BUYER,
     isSeller: user?.role === UserRole.SELLER,
+    isSuperAdmin: user?.role === UserRole.SUPER_ADMIN,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

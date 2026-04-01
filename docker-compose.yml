@@ -109,6 +109,23 @@ services:
       timeout: 5s
       retries: 5
 
+  # ── Admin API (FastAPI) ───────────────────────────────────────────────────
+  admin-api:
+    build:
+      context: ./admin-backend
+      dockerfile: Dockerfile
+    container_name: gearswap-admin-api
+    restart: unless-stopped
+    ports:
+      - '8000:8000'
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/gearswap
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      CORS_ORIGINS: http://localhost:3000
+    depends_on:
+      mongo:
+        condition: service_healthy
+
 volumes:
   redis_data:
   mongo_data:
