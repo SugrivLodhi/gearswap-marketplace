@@ -4,6 +4,7 @@ import { useQuery, useMutation } from '@apollo/client';
 import { GET_MY_CART, REMOVE_FROM_CART, UPDATE_CART_ITEM, APPLY_DISCOUNT, REMOVE_DISCOUNT, CHECKOUT } from '@/graphql/queries';
 import { Navbar } from '@/components/Navbar';
 import { Card } from '@/components/ui/Card';
+import { RecommendedProducts } from '@/components/RecommendedProducts';
 import { Button } from '@/components/ui/Button';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -240,6 +241,10 @@ export default function CartPage() {
             </div>
           </div>
         )}
+
+        {/* Dynamic Recommendations */}
+        <RecommendedProducts />
+        
       </main>
     </div>
   );

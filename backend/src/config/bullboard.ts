@@ -1,7 +1,7 @@
 import { createBullBoard } from '@bull-board/api';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { ExpressAdapter } from '@bull-board/express';
-import { getEmailQueue } from '../queues';
+import { getEmailQueue, getRecommendationQueue } from '../queues';
 
 /**
  * Creates and returns a configured Bull Board Express adapter.
@@ -19,6 +19,7 @@ export function createBullBoardAdapter(): ExpressAdapter {
     createBullBoard({
         queues: [
             new BullMQAdapter(getEmailQueue()),
+            new BullMQAdapter(getRecommendationQueue()),
             // Add more queues here as your app grows:
             // new BullMQAdapter(getOrderQueue()),
             // new BullMQAdapter(getNotificationQueue()),

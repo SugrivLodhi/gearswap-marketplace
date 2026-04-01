@@ -11,4 +11,10 @@ export {
     closeEmailQueue,
 } from './email.queue';
 
+export {
+    getRecommendationQueue,
+    enqueueUpdateRecommendations,
+    closeRecommendationQueue,
+} from './recommendation.queue';
+
 export * from './types';
