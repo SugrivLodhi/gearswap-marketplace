@@ -33,7 +33,7 @@ export async function enqueueUpdateRecommendations(
 ): Promise<void> {
     const queue = getRecommendationQueue();
     // Unique job ID based on userId to throttle duplicate rapid requests
-    const jobId = `rec:user:${data.userId}:${Date.now()}`;
+    const jobId = `rec-user-${data.userId}-${Date.now()}`;
     
     await queue.add(
         'update-recommendations' satisfies RecommendationJobName,

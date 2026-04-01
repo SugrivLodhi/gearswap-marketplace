@@ -236,33 +236,53 @@ class CartService {
         const cart = await this.getOrCreateCart(buyerId);
 
         // Calculate item prices
-        const itemsWithPricing = await Promise.all(
-            cart.items.map(async (item) => {
-                const variantData = await productService.getVariantBySku(
-                    item.productId.toString(),
-                    item.variantId.toString()
-                );
+        const itemsWithPricing: Array<{
+            productId: string;
+            variantId: string;
+            productName: string;
+            variantSku: string;
+            price: number;
+            quantity: number;
+            subtotal: number;
+        }> = [];
+        let hasOrphanedItems = false;
 
-                if (!variantData) {
-                    throw new Error(
-                        `Product or variant not found: ${item.productId}/${item.variantId}`
-                    );
-                }
+        for (const item of cart.items) {
+            const variantData = await productService.getVariantBySku(
+                item.productId.toString(),
+                item.variantId.toString()
+            );
 
-                const price = variantData.variant.price;
-                const subtotal = price * item.quantity;
+            if (!variantData) {
+                // Product or variant was deleted from catalog
+                hasOrphanedItems = true;
+                continue;
+            }
 
-                return {
-                    productId: item.productId.toString(),
-                    variantId: item.variantId.toString(),
-                    productName: variantData.product.name,
-                    variantSku: variantData.variant.sku,
-                    price,
-                    quantity: item.quantity,
-                    subtotal,
-                };
-            })
-        );
+            const price = variantData.variant.price;
+            const subtotal = price * item.quantity;
+
+            itemsWithPricing.push({
+                productId: item.productId.toString(),
+                variantId: item.variantId.toString(),
+                productName: variantData.product.name,
+                variantSku: variantData.variant.sku,
+                price,
+                quantity: item.quantity,
+                subtotal,
+            });
+        }
+
+        if (hasOrphanedItems) {
+            // Self-heal the cart by removing items that no longer exist
+            cart.items = cart.items.filter(item => 
+                itemsWithPricing.some(p => 
+                    p.productId === item.productId.toString() && 
+                    p.variantId === item.variantId.toString()
+                )
+            );
+            await cart.save();
+        }
 
         // Calculate subtotal
         const subtotal = itemsWithPricing.reduce(
