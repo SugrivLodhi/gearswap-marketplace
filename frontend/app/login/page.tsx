@@ -35,7 +35,11 @@ export default function LoginPage() {
 
       if (data.login.user.role === 'SELLER') {
         router.push('/seller/dashboard');
-      } else {
+      }
+      else if (data.login.user.role === 'SUPER_ADMIN') {
+        router.push('/admin');
+      }
+      else {
         router.push('/');
       }
     } catch (err: any) {

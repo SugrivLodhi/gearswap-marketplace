@@ -1,23 +1,48 @@
-from pydantic import BaseModel, EmailStr, Field
-from typing import List, Optional, Dict
+from pydantic import BaseModel, EmailStr, Field, ConfigDict, GetJsonSchemaHandler
+from pydantic.json_schema import JsonSchemaValue
+from pydantic_core import core_schema
+from typing import List, Optional, Dict, Annotated, Any
 from enum import Enum
 from datetime import datetime
 from bson import ObjectId
 
-class PyObjectId(ObjectId):
+class _ObjectIdPydanticAnnotation:
     @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
+    def __get_pydantic_core_schema__(
+        cls,
+        _source_type: Any,
+        _handler: Any,
+    ) -> core_schema.CoreSchema:
+        def validate_from_str(v: Any) -> ObjectId:
+            if not ObjectId.is_valid(v):
+                raise ValueError("Invalid ObjectId")
+            return ObjectId(v)
+
+        from_str_schema = core_schema.chain_schema(
+            [
+                core_schema.str_schema(),
+                core_schema.no_info_plain_validator_function(validate_from_str),
+            ]
+        )
+
+        return core_schema.json_or_python_schema(
+            json_schema=from_str_schema,
+            python_schema=core_schema.union_schema(
+                [
+                    core_schema.is_instance_schema(ObjectId),
+                    from_str_schema,
+                ]
+            ),
+            serialization=core_schema.plain_serializer_function_ser_schema(str),
+        )
 
     @classmethod
-    def validate(cls, v):
-        if not ObjectId.is_valid(v):
-            raise ValueError("Invalid objectid")
-        return ObjectId(v)
+    def __get_pydantic_json_schema__(
+        cls, _core_schema: core_schema.CoreSchema, handler: GetJsonSchemaHandler
+    ) -> JsonSchemaValue:
+        return handler(core_schema.str_schema())
 
-    @classmethod
-    def __modify_schema__(cls, field_schema):
-        field_schema.update(type="string")
+PyObjectId = Annotated[ObjectId, _ObjectIdPydanticAnnotation]
 
 class UserRole(str, Enum):
     BUYER = "BUYER"
@@ -31,10 +56,10 @@ class UserBase(BaseModel):
     createdAt: Optional[datetime] = None
     updatedAt: Optional[datetime] = None
 
-    class Config:
-        populate_by_name = True
-        arbitrary_types_allowed = True
-        json_encoders = {ObjectId: str}
+    model_config = ConfigDict(
+        populate_by_name=True,
+        arbitrary_types_allowed=True,
+    )
 
 class ProductBase(BaseModel):
     id: Optional[PyObjectId] = Field(alias="_id", default=None)
@@ -44,10 +69,10 @@ class ProductBase(BaseModel):
     sellerId: PyObjectId
     isDeleted: bool = False
 
-    class Config:
-        populate_by_name = True
-        arbitrary_types_allowed = True
-        json_encoders = {ObjectId: str}
+    model_config = ConfigDict(
+        populate_by_name=True,
+        arbitrary_types_allowed=True,
+    )
 
 class OrderBase(BaseModel):
     id: Optional[PyObjectId] = Field(alias="_id", default=None)
@@ -56,10 +81,10 @@ class OrderBase(BaseModel):
     grandTotal: float
     createdAt: datetime
 
-    class Config:
-        populate_by_name = True
-        arbitrary_types_allowed = True
-        json_encoders = {ObjectId: str}
+    model_config = ConfigDict(
+        populate_by_name=True,
+        arbitrary_types_allowed=True,
+    )
 
 class DashboardStats(BaseModel):
     total_users: int

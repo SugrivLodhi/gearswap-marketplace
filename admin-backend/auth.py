@@ -1,6 +1,6 @@
 import jwt
 from fastapi import Request, HTTPException, Depends
-from .config import settings
+from config import settings
 from enum import Enum
 
 class UserRole(str, Enum):

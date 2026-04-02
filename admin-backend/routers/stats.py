@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
-from .database import db_instance
-from .models import DashboardStats
-from .auth import admin_required
+from database import db_instance
+from models import DashboardStats
+from auth import admin_required
 
 router = APIRouter(prefix="/stats", tags=["Stats"])
 

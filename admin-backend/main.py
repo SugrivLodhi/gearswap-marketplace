@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .config import settings
-from .database import db_instance
-from .routers import users, stats, sellers, products
+from config import settings
+from database import db_instance
+from routers import users, stats, sellers, products
 
 app = FastAPI(title="GearSwap Admin API")
 

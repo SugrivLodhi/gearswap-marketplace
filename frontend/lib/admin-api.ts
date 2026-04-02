@@ -36,6 +36,38 @@ class AdminAPI {
     if (!res.ok) throw new Error('Failed to delete user');
     return res.json();
   }
+  static async listSellers() {
+    const res = await fetch(`${ADMIN_API_URL}/sellers/`, {
+      headers: this.getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to fetch sellers');
+    return res.json();
+  }
+
+  static async getSellerStats(sellerId: string) {
+    const res = await fetch(`${ADMIN_API_URL}/sellers/${sellerId}/stats`, {
+      headers: this.getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to fetch seller stats');
+    return res.json();
+  }
+
+  static async listProducts() {
+    const res = await fetch(`${ADMIN_API_URL}/products/`, {
+      headers: this.getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to fetch products');
+    return res.json();
+  }
+
+  static async deleteProduct(productId: string) {
+    const res = await fetch(`${ADMIN_API_URL}/products/${productId}`, {
+      method: 'DELETE',
+      headers: this.getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to moderate product');
+    return res.json();
+  }
 }
 
 export default AdminAPI;

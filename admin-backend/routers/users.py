@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import List
-from .database import db_instance
-from .models import UserBase, UserRole
-from .auth import admin_required
+from database import db_instance
+from models import UserBase, UserRole
+from auth import admin_required
 from bson import ObjectId
 
 router = APIRouter(prefix="/users", tags=["Users"])
