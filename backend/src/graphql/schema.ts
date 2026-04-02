@@ -5,6 +5,7 @@ export const typeDefs = gql`
   enum UserRole {
     BUYER
     SELLER
+    SUPER_ADMIN
   }
 
   enum OrderStatus {
