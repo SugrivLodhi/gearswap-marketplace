@@ -21,6 +21,12 @@ interface Environment {
     rateLimitUserMax: number;
     rateLimitUserWindow: number;
     rateLimitSkipOnRedisError: boolean;
+    kafkaEnabled: boolean;
+    kafkaBrokers: string[];
+    kafkaClientId: string;
+    typesenseSyncMode: 'inline' | 'event';
+    inventoryReservationMode: 'legacy' | 'shadow' | 'saga';
+    inventoryReservationTimeoutMs: number;
 }
 
 const getEnvVariable = (key: string, defaultValue?: string): string => {
@@ -50,4 +56,22 @@ export const env: Environment = {
     rateLimitUserMax: parseInt(getEnvVariable('RATE_LIMIT_USER_MAX', '300'), 10),
     rateLimitUserWindow: parseInt(getEnvVariable('RATE_LIMIT_USER_WINDOW', '900'), 10),
     rateLimitSkipOnRedisError: getEnvVariable('RATE_LIMIT_SKIP_ON_REDIS_ERROR', 'true') === 'true',
+    kafkaEnabled: getEnvVariable('KAFKA_ENABLED', 'false') === 'true',
+    kafkaBrokers: getEnvVariable('KAFKA_BROKERS', 'localhost:9092')
+        .split(',')
+        .map((broker) => broker.trim())
+        .filter((broker) => broker.length > 0),
+    kafkaClientId: getEnvVariable('KAFKA_CLIENT_ID', 'gearswap-api'),
+    typesenseSyncMode: getEnvVariable('TYPESENSE_SYNC_MODE', 'inline') === 'event' ? 'event' : 'inline',
+    inventoryReservationMode: (() => {
+        const mode = getEnvVariable('INVENTORY_RESERVATION_MODE', 'legacy');
+        if (mode === 'shadow' || mode === 'saga') {
+            return mode;
+        }
+        return 'legacy';
+    })(),
+    inventoryReservationTimeoutMs: Number.parseInt(
+        getEnvVariable('INVENTORY_RESERVATION_TIMEOUT_MS', '8000'),
+        10
+    ),
 };

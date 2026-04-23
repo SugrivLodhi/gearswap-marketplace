@@ -1,11 +1,13 @@
 import { Product, IProduct, IVariant } from './product.model';
 import mongoose from 'mongoose';
+import { env } from '../../config/environment';
 import {
     typesenseClient,
     PRODUCTS_COLLECTION_NAME,
     upsertProductInTypesense,
     deleteProductFromTypesense
 } from '../../utils/typesense';
+import { publishEvent } from '../../events/domain-events';
 
 export interface VariantInput {
     sku: string;
@@ -118,8 +120,21 @@ class ProductService {
             variants: transformedVariants,
         });
 
-        // Push to typescript
-        await upsertProductInTypesense(product);
+        if (env.typesenseSyncMode === 'inline') {
+            await upsertProductInTypesense(product);
+        }
+
+        await publishEvent(
+            'product.created',
+            {
+                productId: product._id.toString(),
+                sellerId: sellerId,
+                name: product.name,
+                category: product.category,
+                isDeleted: product.isDeleted,
+            },
+            product._id.toString()
+        );
 
         return product;
     }
@@ -172,8 +187,21 @@ class ProductService {
 
         await product.save();
 
-        // Update Typesense index
-        await upsertProductInTypesense(product);
+        if (env.typesenseSyncMode === 'inline') {
+            await upsertProductInTypesense(product);
+        }
+
+        await publishEvent(
+            'product.updated',
+            {
+                productId: product._id.toString(),
+                sellerId: sellerId,
+                name: product.name,
+                category: product.category,
+                isDeleted: product.isDeleted,
+            },
+            product._id.toString()
+        );
 
         return product;
     }
@@ -195,8 +223,19 @@ class ProductService {
             throw new Error('Product not found or access denied');
         }
 
-        // Remove from Typesense
-        await deleteProductFromTypesense(productId);
+        if (env.typesenseSyncMode === 'inline') {
+            await deleteProductFromTypesense(productId);
+        }
+
+        await publishEvent(
+            'product.deleted',
+            {
+                productId,
+                sellerId,
+                isDeleted: true,
+            },
+            productId
+        );
 
         return true;
     }

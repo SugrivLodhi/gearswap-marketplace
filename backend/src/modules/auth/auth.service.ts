@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import { User, UserRole, IUser } from './auth.model';
 import { env } from '../../config/environment';
 import { enqueueWelcomeEmail } from '../../queues';
+import { publishEvent } from '../../events/domain-events';
 
 export interface RegisterInput {
     email: string;
@@ -60,6 +61,16 @@ class AuthService {
             userId: user._id.toString(),
             email: user.email,
         });
+
+        await publishEvent(
+            'user.registered',
+            {
+                userId: user._id.toString(),
+                email: user.email,
+                role: user.role,
+            },
+            user._id.toString()
+        );
 
         // Generate token
         const token = this.generateToken(user);

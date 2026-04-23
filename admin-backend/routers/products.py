@@ -4,6 +4,7 @@ from database import db_instance
 from models import ProductBase
 from auth import admin_required
 from bson import ObjectId
+from kafka_events import publish_event
 
 router = APIRouter(prefix="/products", tags=["Products"])
 
@@ -33,4 +34,22 @@ async def moderate_product(product_id: str, _ = Depends(admin_required)):
     
     if result.modified_count == 0:
         raise HTTPException(status_code=404, detail="Product not found or already deleted")
+    await publish_event(
+        "product.moderated",
+        {
+            "productId": product_id,
+            "isDeleted": True,
+            "moderatedBy": "admin",
+        },
+        key=product_id
+    )
+    await publish_event(
+        "audit.event",
+        {
+            "action": "product.moderated",
+            "resourceId": product_id,
+            "resourceType": "product",
+        },
+        key=product_id
+    )
     return {"message": "Product moderated (soft-deleted) successfully"}

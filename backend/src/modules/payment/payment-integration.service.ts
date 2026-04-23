@@ -1,6 +1,7 @@
 import { razorpayService } from './payment.service';
 import { orderService } from '../order/order.service';
 import { Order, OrderStatus } from '../order/order.model';
+import { publishEvent } from '../../events/domain-events';
 
 /**
  * Payment Integration with Order Service
@@ -105,6 +106,31 @@ class PaymentIntegrationService {
         order.status = OrderStatus.PAID;
         await order.save();
 
+        await publishEvent(
+            'payment.succeeded',
+            {
+                orderId: order._id.toString(),
+                buyerId: order.buyerId.toString(),
+                paymentProvider: 'mock-razorpay',
+                paymentId: razorpayPaymentId,
+                razorpayOrderId,
+                amount: order.grandTotal,
+                currency: 'INR',
+            },
+            order._id.toString()
+        );
+        await publishEvent(
+            'order.confirmed',
+            {
+                orderId: order._id.toString(),
+                buyerId: order.buyerId.toString(),
+                status: order.status,
+                grandTotal: order.grandTotal,
+                itemCount: order.items.length,
+            },
+            order._id.toString()
+        );
+
         console.log('✅ Payment verified and order updated:', {
             orderId: order._id,
             status: order.status,
@@ -134,6 +160,15 @@ class PaymentIntegrationService {
 
         // Order remains in PENDING status
         // Buyer can retry payment or cancel order
+        await publishEvent(
+            'payment.failed',
+            {
+                orderId,
+                reason,
+                paymentProvider: 'mock-razorpay',
+            },
+            orderId
+        );
     }
 }
 

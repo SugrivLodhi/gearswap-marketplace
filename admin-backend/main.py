@@ -2,7 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from config import settings
 from database import db_instance
-from routers import users, stats, sellers, products
+from routers import users, stats, sellers, products, ops
+from kafka_events import close_producer
 
 app = FastAPI(title="GearSwap Admin API")
 
@@ -21,6 +22,7 @@ async def startup_db_client():
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
+    await close_producer()
     await db_instance.close_mongo_connection()
 
 # Include Routers
@@ -28,6 +30,7 @@ app.include_router(users.router)
 app.include_router(stats.router)
 app.include_router(sellers.router)
 app.include_router(products.router)
+app.include_router(ops.router)
 
 @app.get("/")
 async def root():

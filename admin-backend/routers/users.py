@@ -4,6 +4,7 @@ from database import db_instance
 from models import UserBase, UserRole
 from auth import admin_required
 from bson import ObjectId
+from kafka_events import publish_event
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -39,7 +40,28 @@ async def delete_user(user_id: str, _ = Depends(admin_required)):
     if not ObjectId.is_valid(user_id):
         raise HTTPException(status_code=400, detail="Invalid user ID")
     
-    result = await db_instance.db["users"].delete_one({"_id": ObjectId(user_id)})
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="User not found")
-    return {"message": "User deleted successfully"}
+    result = await db_instance.db["users"].update_one(
+        {"_id": ObjectId(user_id), "isDeleted": {"$ne": True}},
+        {"$set": {"isDeleted": True}}
+    )
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="User not found or already deleted")
+
+    await publish_event(
+        "user.deleted",
+        {
+            "userId": user_id,
+            "deletedBy": "admin",
+        },
+        key=user_id
+    )
+    await publish_event(
+        "audit.event",
+        {
+            "action": "user.deleted",
+            "resourceId": user_id,
+            "resourceType": "user",
+        },
+        key=user_id
+    )
+    return {"message": "User soft-deleted successfully"}

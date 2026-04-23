@@ -16,11 +16,17 @@ import { createBullBoardAdapter } from './config/bullboard';
 import { createEmailWorker } from './workers/email.worker';
 import { createServer } from 'http';
 import { initChatSocket } from './modules/chat/chat.socket';
+import { disconnectEventProducer } from './events/domain-events';
+import {
+    disconnectInventoryReplyConsumer,
+    startInventoryReplyConsumer,
+} from './events/inventory-reply-consumer';
 
 // Force restart: schema update
 async function startServer() {
     // Connect to database
     await connectDatabase();
+    await startInventoryReplyConsumer();
 
     // -------------------------------------------------------------------------
     // Start BullMQ workers — must be initialised before the server begins
@@ -115,3 +121,12 @@ startServer().catch((error) => {
     console.error('Failed to start server:', error);
     process.exit(1);
 });
+
+const gracefulShutdown = async (): Promise<void> => {
+    await disconnectInventoryReplyConsumer();
+    await disconnectEventProducer();
+    process.exit(0);
+};
+
+process.on('SIGINT', gracefulShutdown);
+process.on('SIGTERM', gracefulShutdown);

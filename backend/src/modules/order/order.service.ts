@@ -5,6 +5,9 @@ import { discountService } from '../discount/discount.service';
 import { User } from '../auth/auth.model';
 import { enqueueOrderConfirmationEmail } from '../../queues';
 import mongoose from 'mongoose';
+import { env } from '../../config/environment';
+import { publishEvent } from '../../events/domain-events';
+import { waitForInventoryReserveReply } from '../../events/inventory-reply-consumer';
 
 class OrderService {
     /**
@@ -147,35 +150,119 @@ class OrderService {
             grandTotal,
         });
 
-        // Deduct stock for each item
-        for (const item of cartData.items) {
-            await productService.updateVariantStock(
-                item.productId,
-                item.variantId,
-                -item.quantity
+        const reservationRequestId = `${env.inventoryReservationMode}-${order._id.toString()}`;
+        const reservationItems = cartData.items.map((item) => ({
+            productId: item.productId,
+            variantId: item.variantId,
+            quantity: item.quantity,
+        }));
+        let inventoryReservedViaSaga = false;
+        let inventoryDeductedViaLegacy = false;
+
+        if (env.inventoryReservationMode === 'shadow') {
+            await publishEvent(
+                'inventory.reserve.request',
+                {
+                    requestId: reservationRequestId,
+                    orderId: order._id.toString(),
+                    mode: 'shadow',
+                    items: reservationItems,
+                },
+                order._id.toString()
             );
         }
 
-        // Increment discount usage if applied
-        if (cartData.cart.discountId) {
-            await discountService.incrementUsage(
-                cartData.cart.discountId.toString()
+        if (env.inventoryReservationMode === 'saga' && env.kafkaEnabled) {
+            await publishEvent(
+                'inventory.reserve.request',
+                {
+                    requestId: reservationRequestId,
+                    orderId: order._id.toString(),
+                    mode: 'reserve',
+                    items: reservationItems,
+                },
+                order._id.toString()
             );
+
+            const reply = await waitForInventoryReserveReply(
+                reservationRequestId,
+                env.inventoryReservationTimeoutMs
+            );
+            if (!reply.success) {
+                await Order.deleteOne({ _id: order._id });
+                throw new Error(reply.reason || 'Inventory reservation failed');
+            }
+            inventoryReservedViaSaga = true;
+        } else {
+            // Legacy flow: in-process stock deduction.
+            for (const item of cartData.items) {
+                await productService.updateVariantStock(
+                    item.productId,
+                    item.variantId,
+                    -item.quantity
+                );
+            }
+            inventoryDeductedViaLegacy = true;
         }
 
-        // Clear cart
-        await cartService.clearCart(buyerId);
+        try {
+            // Increment discount usage if applied
+            if (cartData.cart.discountId) {
+                await discountService.incrementUsage(
+                    cartData.cart.discountId.toString()
+                );
+            }
 
-        // Enqueue order confirmation email (fire-and-forget, idempotent)
-        const buyer = await User.findById(buyerId).select('email').lean();
-        if (buyer) {
-            await enqueueOrderConfirmationEmail({
-                jobId: `order-confirm-${order._id.toString()}`, // deduplication key
-                orderId: order._id.toString(),
-                buyerEmail: buyer.email,
-                total: grandTotal,
-                currency: 'INR',
-            });
+            // Clear cart
+            await cartService.clearCart(buyerId);
+
+            // Enqueue order confirmation email (fire-and-forget, idempotent)
+            const buyer = await User.findById(buyerId).select('email').lean();
+            if (buyer) {
+                await enqueueOrderConfirmationEmail({
+                    jobId: `order-confirm-${order._id.toString()}`, // deduplication key
+                    orderId: order._id.toString(),
+                    buyerEmail: buyer.email,
+                    total: grandTotal,
+                    currency: 'INR',
+                });
+            }
+
+            await publishEvent(
+                'order.checkout.initiated',
+                {
+                    orderId: order._id.toString(),
+                    buyerId,
+                    status: order.status,
+                    itemCount: order.items.length,
+                    grandTotal,
+                },
+                order._id.toString()
+            );
+        } catch (error) {
+            if (inventoryReservedViaSaga) {
+                await publishEvent(
+                    'inventory.release.request',
+                    {
+                        reservationRequestId,
+                        orderId: order._id.toString(),
+                    },
+                    order._id.toString()
+                );
+            }
+
+            if (inventoryDeductedViaLegacy) {
+                for (const item of cartData.items) {
+                    await productService.updateVariantStock(
+                        item.productId,
+                        item.variantId,
+                        item.quantity
+                    );
+                }
+            }
+
+            await Order.deleteOne({ _id: order._id });
+            throw error;
         }
 
         return order;
@@ -247,8 +334,20 @@ class OrderService {
             );
         }
 
+        const previousStatus = order.status;
         order.status = newStatus;
         await order.save();
+
+        await publishEvent(
+            'order.status.changed',
+            {
+                orderId: order._id.toString(),
+                sellerId,
+                previousStatus,
+                currentStatus: order.status,
+            },
+            order._id.toString()
+        );
 
         return order;
     }
