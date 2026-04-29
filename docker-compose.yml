@@ -206,6 +206,10 @@ services:
       TYPESENSE_SYNC_MODE: event
       INVENTORY_RESERVATION_MODE: shadow
       INVENTORY_RESERVATION_TIMEOUT_MS: 8000
+      RECOMMENDATION_AI_SERVICE_URL: http://recommendation-ai-service:9010
+      RECOMMENDATION_AI_TIMEOUT_MS: 1200
+      RECOMMENDATION_STRATEGY: hybrid
+      RECOMMENDATION_HYBRID_TRAFFIC_PERCENT: 50
     depends_on:
       redis:
         condition: service_healthy
@@ -214,6 +218,8 @@ services:
       typesense:
         condition: service_started
       kafka:
+        condition: service_started
+      recommendation-ai-service:
         condition: service_started
     command: node dist/index.js
 
@@ -285,6 +291,33 @@ services:
       KAFKA_CLIENT_ID: gearswap-admin-api
       CATALOG_SERVICE_BASE_URL: http://catalog-service:9002
     depends_on:
+      mongo:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+
+  # ── Recommendation AI Service (FastAPI + OpenAI) ─────────────────────────
+  recommendation-ai-service:
+    build:
+      context: ./recommendation-ai-service
+      dockerfile: Dockerfile
+    container_name: gearswap-recommendation-ai-service
+    restart: unless-stopped
+    ports:
+      - '9010:9010'
+    env_file:
+      - ./recommendation-ai-service/.env
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      MONGODB_URI: mongodb://mongo:27017/gearswap
+      MONGODB_DB_NAME: gearswap
+      KAFKA_ENABLED: 'true'
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_GROUP_ID: recommendation-ai-service
+      KAFKA_CLIENT_ID: gearswap-recommendation-ai-service
+    depends_on:
+      redis:
+        condition: service_healthy
       mongo:
         condition: service_healthy
       kafka:

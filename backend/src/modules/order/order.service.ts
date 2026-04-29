@@ -8,6 +8,7 @@ import mongoose from 'mongoose';
 import { env } from '../../config/environment';
 import { publishEvent } from '../../events/domain-events';
 import { waitForInventoryReserveReply } from '../../events/inventory-reply-consumer';
+import { buildOrderCheckoutInitiatedPayload } from '../../events/recommendation-events';
 
 class OrderService {
     /**
@@ -23,6 +24,11 @@ class OrderService {
 
         // Validate stock and prepare order items with GST calculation
         const orderItems: IOrderItem[] = [];
+        const recommendationItems: Array<{
+            productId: string;
+            category: string;
+            quantity: number;
+        }> = [];
         let taxableSubtotal = 0;
         let totalGst = 0;
         let totalSgst = 0;
@@ -105,6 +111,12 @@ class OrderService {
                 cgstAmount,
                 igstAmount,
                 totalAmount,
+            });
+
+            recommendationItems.push({
+                productId: item.productId,
+                category: variantData.product.category,
+                quantity: item.quantity,
             });
         }
 
@@ -231,10 +243,12 @@ class OrderService {
             await publishEvent(
                 'order.checkout.initiated',
                 {
-                    orderId: order._id.toString(),
-                    buyerId,
+                    ...buildOrderCheckoutInitiatedPayload({
+                        orderId: order._id.toString(),
+                        buyerId,
+                        items: recommendationItems,
+                    }),
                     status: order.status,
-                    itemCount: order.items.length,
                     grandTotal,
                 },
                 order._id.toString()

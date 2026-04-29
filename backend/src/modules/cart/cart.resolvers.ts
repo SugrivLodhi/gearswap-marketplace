@@ -19,7 +19,11 @@ export const cartResolvers = {
             const user = requireBuyer(context);
             const cart = await cartService.getOrCreateCart(user.userId);
             const itemIds = cart.items.map((item: any) => item.productId.toString());
-            return recommendationService.getCartRecommendations(itemIds, limit);
+            return recommendationService.getCartRecommendationsHybrid(
+                user.userId,
+                itemIds,
+                limit
+            );
         },
     },
 

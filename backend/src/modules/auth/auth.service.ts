@@ -3,6 +3,7 @@ import { User, UserRole, IUser } from './auth.model';
 import { env } from '../../config/environment';
 import { enqueueWelcomeEmail } from '../../queues';
 import { publishEvent } from '../../events/domain-events';
+import { buildUserRegisteredPayload } from '../../events/recommendation-events';
 
 export interface RegisterInput {
     email: string;
@@ -65,7 +66,7 @@ class AuthService {
         await publishEvent(
             'user.registered',
             {
-                userId: user._id.toString(),
+                ...buildUserRegisteredPayload(user._id.toString()),
                 email: user.email,
                 role: user.role,
             },

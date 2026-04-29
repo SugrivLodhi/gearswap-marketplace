@@ -1,8 +1,10 @@
-import { Cart, ICart, ICartItem } from './cart.model';
+import { Cart, ICart } from './cart.model';
 import { productService } from '../product/product.service';
 import { discountService } from '../discount/discount.service';
 import mongoose from 'mongoose';
 import { enqueueUpdateRecommendations } from '../../queues';
+import { publishEvent } from '../../events/domain-events';
+import { buildCartUpdatedPayload } from '../../events/recommendation-events';
 
 export interface AddToCartInput {
     productId: string;
@@ -33,6 +35,33 @@ export interface CartWithPricing {
 }
 
 class CartService {
+    private emitCartUpdatedEvent(
+        buyerId: string,
+        cart: ICart,
+        action: 'add' | 'update' | 'remove' | 'clear'
+    ): void {
+        const items = cart.items.map((item) => ({
+            productId: item.productId.toString(),
+            quantity: item.quantity,
+        }));
+
+        const payload = buildCartUpdatedPayload({
+            buyerId,
+            action,
+            items,
+        });
+
+        void publishEvent(
+            'cart.updated',
+            {
+                ...payload,
+            },
+            buyerId
+        ).catch((err) => {
+            console.error('Failed to publish cart.updated event:', err);
+        });
+    }
+
     /**
      * Get or create cart for buyer
      */
@@ -115,6 +144,7 @@ class CartService {
             // Log but don't fail the request
             console.error('Failed to queue recommendation update:', err);
         });
+        this.emitCartUpdatedEvent(buyerId, cart, 'add');
 
         return cart;
     }
@@ -172,6 +202,7 @@ class CartService {
         }).catch(err => {
             console.error('Failed to queue recommendation update:', err);
         });
+        this.emitCartUpdatedEvent(buyerId, cart, 'update');
 
         return cart;
     }
@@ -195,6 +226,7 @@ class CartService {
         );
 
         await cart.save();
+        this.emitCartUpdatedEvent(buyerId, cart, 'remove');
         return cart;
     }
 
@@ -330,6 +362,7 @@ class CartService {
         cart.items = [];
         cart.discountId = undefined;
         await cart.save();
+        this.emitCartUpdatedEvent(buyerId, cart, 'clear');
     }
 }
 

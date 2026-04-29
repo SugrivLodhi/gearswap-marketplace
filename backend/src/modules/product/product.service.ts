@@ -8,6 +8,7 @@ import {
     deleteProductFromTypesense
 } from '../../utils/typesense';
 import { publishEvent } from '../../events/domain-events';
+import { buildProductLifecyclePayload } from '../../events/recommendation-events';
 
 export interface VariantInput {
     sku: string;
@@ -127,7 +128,10 @@ class ProductService {
         await publishEvent(
             'product.created',
             {
-                productId: product._id.toString(),
+                ...buildProductLifecyclePayload(
+                    'product.created',
+                    product._id.toString()
+                ),
                 sellerId: sellerId,
                 name: product.name,
                 category: product.category,
@@ -194,7 +198,10 @@ class ProductService {
         await publishEvent(
             'product.updated',
             {
-                productId: product._id.toString(),
+                ...buildProductLifecyclePayload(
+                    'product.updated',
+                    product._id.toString()
+                ),
                 sellerId: sellerId,
                 name: product.name,
                 category: product.category,
@@ -230,7 +237,7 @@ class ProductService {
         await publishEvent(
             'product.deleted',
             {
-                productId,
+                ...buildProductLifecyclePayload('product.deleted', productId),
                 sellerId,
                 isDeleted: true,
             },

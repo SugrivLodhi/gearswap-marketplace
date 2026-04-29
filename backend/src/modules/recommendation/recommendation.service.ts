@@ -1,8 +1,36 @@
 import { getRedisConnection } from '../../config/redis';
 import { Product, IProduct } from '../product/product.model';
 import mongoose from 'mongoose';
+import { env } from '../../config/environment';
+import { logger } from '../../utils/logger';
+
+interface AiRecommendationResponse {
+    recommendations?: Array<{
+        product_id?: string;
+        score?: number;
+        reason?: string;
+        source?: string;
+    }>;
+}
 
 export class RecommendationService {
+    private isHybridEnabledForUser(userId: string): boolean {
+        if (env.recommendationStrategy === 'hybrid') {
+            return true;
+        }
+        if (env.recommendationStrategy === 'redis') {
+            return false;
+        }
+
+        // Stable A/B bucketing by user id hash.
+        let hash = 0;
+        for (let i = 0; i < userId.length; i++) {
+            hash = (hash * 31 + (userId.codePointAt(i) || 0)) % 1000;
+        }
+        const bucketPercent = hash % 100;
+        return bucketPercent < env.recommendationHybridTrafficPercent;
+    }
+
     /**
      * Updates the co-occurrence graph in Redis for a set of items.
      * For every pair of items in the cart, it increments their relation score.
@@ -96,6 +124,121 @@ export class RecommendationService {
 
         // Complete fallback if Redis has no data
         return this.getFallbackRecommendations(cartItemIds, limit);
+    }
+
+    async getCartRecommendationsHybrid(
+        userId: string,
+        cartItemIds: string[],
+        limit: number = 4
+    ): Promise<IProduct[]> {
+        if (!this.isHybridEnabledForUser(userId)) {
+            return this.getCartRecommendations(cartItemIds, limit);
+        }
+
+        const aiRecommendationIds = await this.getAiCartRecommendationIds(
+            userId,
+            cartItemIds,
+            limit
+        );
+
+        if (aiRecommendationIds.length > 0) {
+            const aiProducts = await this.getProductsByIdsInOrder(aiRecommendationIds);
+            const boundedAiProducts = aiProducts.slice(0, limit);
+
+            if (boundedAiProducts.length >= limit) {
+                return boundedAiProducts;
+            }
+
+            const excludedIds = [
+                ...cartItemIds,
+                ...boundedAiProducts.map((p) => p._id.toString()),
+            ];
+            const fallbackProducts = await this.getFallbackRecommendations(
+                excludedIds,
+                limit - boundedAiProducts.length
+            );
+            return [...boundedAiProducts, ...fallbackProducts];
+        }
+
+        return this.getCartRecommendations(cartItemIds, limit);
+    }
+
+    private async getAiCartRecommendationIds(
+        userId: string,
+        cartItemIds: string[],
+        limit: number
+    ): Promise<string[]> {
+        const controller = new AbortController();
+        const timeout = setTimeout(
+            () => controller.abort(),
+            env.recommendationAiTimeoutMs
+        );
+
+        try {
+            const response = await fetch(
+                `${env.recommendationAiServiceUrl}/v1/recommend/cart`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        cart_items: cartItemIds.map((productId) => ({
+                            product_id: productId,
+                            quantity: 1,
+                        })),
+                        limit,
+                    }),
+                    signal: controller.signal,
+                }
+            );
+
+            if (!response.ok) {
+                logger.warn(
+                    { status: response.status },
+                    'AI recommendation service returned non-OK status; using fallback'
+                );
+                return [];
+            }
+
+            const payload = (await response.json()) as AiRecommendationResponse;
+            const aiIds = (payload.recommendations || [])
+                .map((item) => item.product_id)
+                .filter((id): id is string => Boolean(id))
+                .filter((id) => mongoose.Types.ObjectId.isValid(id));
+
+            return Array.from(new Set(aiIds));
+        } catch (error) {
+            logger.warn(
+                { err: error },
+                'AI recommendation service unavailable; using fallback'
+            );
+            return [];
+        } finally {
+            clearTimeout(timeout);
+        }
+    }
+
+    private async getProductsByIdsInOrder(
+        productIds: string[]
+    ): Promise<IProduct[]> {
+        if (productIds.length === 0) {
+            return [];
+        }
+
+        const objectIds = productIds.map((id) => new mongoose.Types.ObjectId(id));
+        const products = await Product.find({
+            _id: { $in: objectIds },
+            isDeleted: false,
+        }).populate('sellerId');
+
+        const productMap = new Map<string, IProduct>();
+        for (const product of products) {
+            productMap.set(product._id.toString(), product);
+        }
+
+        return productIds
+            .map((id) => productMap.get(id))
+            .filter((product): product is IProduct => Boolean(product));
     }
 
     private async getFallbackRecommendations(excludeIds: string[], limit: number): Promise<IProduct[]> {
